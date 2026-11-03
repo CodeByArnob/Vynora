@@ -202,7 +202,7 @@ private fun YouTubeResultRow(item: YouTubeItem, onClick: () -> Unit) {
 @Composable
 fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val playerWebView = remember { mutableStateOf<WebView?>(null) }
-    DisposableEffect(playerWebView.value) {
+    DisposableEffect(Unit) {
         onDispose {
             playerWebView.value?.apply {
                 stopLoading()
