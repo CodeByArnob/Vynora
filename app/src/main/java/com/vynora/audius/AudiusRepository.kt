@@ -30,6 +30,10 @@ data class AudiusTrack(
         album = album,
         durationMs = durationSeconds.coerceAtLeast(0) * 1_000L,
         uri = streamUrl,
+        albumId = 0L,
+        artistId = 0L,
+        dateAddedSeconds = 0L,
+        relativePath = "Audius",
         isFavorite = false
     )
 }
