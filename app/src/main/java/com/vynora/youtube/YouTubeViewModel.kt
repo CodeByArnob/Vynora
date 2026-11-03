@@ -135,8 +135,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
                         if (idx == 0) {
                             base.copy(
                                 title = item.title,
-                                artist = item.channelTitle,
-                                artworkUri = item.thumbnailUrl.ifBlank { base.artworkUri }
+                                artist = item.channelTitle
                             )
                         } else {
                             base
