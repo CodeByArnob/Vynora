@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'features/discover/presentation/discover_screen.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
-void main() {
+import 'app/vynora_shell.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.vynora.vynora.channel.audio',
+    androidNotificationChannelName: 'Vynora playback',
+    androidNotificationOngoing: true,
+  );
   runApp(const ProviderScope(child: VynoraApp()));
 }
 
@@ -30,7 +37,7 @@ class VynoraApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFF101016),
       ),
-      home: const DiscoverScreen(),
+      home: const VynoraShell(),
     );
   }
 }
