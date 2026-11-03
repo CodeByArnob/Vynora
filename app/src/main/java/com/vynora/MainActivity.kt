@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -208,7 +209,8 @@ private fun VynoraApp(
                 )
                 2 -> PlaylistsScreen(
                     modifier = Modifier.padding(padding),
-                    libraryViewModel = libraryViewModel
+                    libraryViewModel = libraryViewModel,
+                    playbackController = playbackController
                 )
                 else -> NowPlayingScreen(
                     modifier = Modifier.padding(padding),
@@ -328,7 +330,12 @@ private fun TrackCollectionScreen(
 }
 
 @androidx.compose.runtime.Composable
-private fun TrackRow(track: AudioTrack, onClick: () -> Unit, onFavorite: () -> Unit) {
+private fun TrackRow(
+    track: AudioTrack,
+    onClick: () -> Unit,
+    onFavorite: () -> Unit,
+    favoriteToggle: Boolean = true
+) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -346,9 +353,17 @@ private fun TrackRow(track: AudioTrack, onClick: () -> Unit, onFavorite: () -> U
         Text(track.durationLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         IconButton(onClick = onFavorite) {
             Icon(
-                if (track.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                contentDescription = if (track.isFavorite) "Remove from favorites" else "Add to favorites",
-                tint = if (track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                if (favoriteToggle) {
+                    if (track.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
+                } else {
+                    Icons.Rounded.RemoveCircleOutline
+                },
+                contentDescription = if (favoriteToggle) {
+                    if (track.isFavorite) "Remove from favorites" else "Add to favorites"
+                } else {
+                    "Remove from playlist"
+                },
+                tint = if (favoriteToggle && track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -454,7 +469,11 @@ private fun formatTime(milliseconds: Long): String {
 }
 
 @androidx.compose.runtime.Composable
-private fun PlaylistsScreen(modifier: Modifier, libraryViewModel: LibraryViewModel) {
+private fun PlaylistsScreen(
+    modifier: Modifier,
+    libraryViewModel: LibraryViewModel,
+    playbackController: PlaybackController
+) {
     val playlists by libraryViewModel.playlists.collectAsStateWithLifecycle()
     val selectedId by libraryViewModel.selectedPlaylistId.collectAsStateWithLifecycle()
     val selectedTracks by libraryViewModel.selectedPlaylistTracks.collectAsStateWithLifecycle()
@@ -490,7 +509,12 @@ private fun PlaylistsScreen(modifier: Modifier, libraryViewModel: LibraryViewMod
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(selectedTracks, key = { it.uri }) { track ->
-                            TrackRow(track, onClick = { }, onFavorite = { libraryViewModel.removeTrackFromPlaylist(selectedPlaylist.id, track) })
+                            TrackRow(
+                                track,
+                                onClick = { playbackController.playQueue(selectedTracks, selectedTracks.indexOf(track)) },
+                                onFavorite = { libraryViewModel.removeTrackFromPlaylist(selectedPlaylist.id, track) },
+                                favoriteToggle = false
+                            )
                         }
                     }
                 }
