@@ -11,6 +11,7 @@ val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use(localProperties::load)
 val youtubeApiKey = (System.getenv("YOUTUBE_API_KEY") ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: "")
+    .replace("\\", "\\\\").replace("\"", "\\\"")
 val audiusApiKey = (System.getenv("AUDIUS_API_KEY") ?: localProperties.getProperty("AUDIUS_API_KEY") ?: "")
     .replace("\\", "\\\\").replace("\"", "\\\"")
 
