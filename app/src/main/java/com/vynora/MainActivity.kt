@@ -35,7 +35,7 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
@@ -172,7 +172,7 @@ private fun VynoraApp(
                         val tabs = listOf(
                             "Library" to Icons.Rounded.LibraryMusic,
                             "Favorites" to Icons.Rounded.Favorite,
-                            "Playlists" to Icons.AutoMirrored.Rounded.QueueMusic,
+                            "Playlists" to Icons.Rounded.QueueMusic,
                             "Player" to Icons.Rounded.GraphicEq
                         )
                         tabs.forEachIndexed { index, pair ->
@@ -381,7 +381,7 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
         Box(
             Modifier.size(92.dp).clip(CircleShape).background(Color(0xFF211B32)),
             contentAlignment = Alignment.Center
-        ) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color(0xFFC8B8FF)) }
+        ) { Icon(Icons.Rounded.QueueMusic, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color(0xFFC8B8FF)) }
         Spacer(Modifier.height(20.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
@@ -533,7 +533,7 @@ private fun PlaylistsScreen(
                             color = MaterialTheme.colorScheme.surfaceVariant
                         ) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Text(playlist.name, modifier = Modifier.weight(1f).padding(start = 12.dp), fontWeight = FontWeight.SemiBold)
                                 Text("Open", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
