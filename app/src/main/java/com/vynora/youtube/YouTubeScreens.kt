@@ -850,13 +850,13 @@ fun YouTubeWatchScreen(
         })();
     """.trimIndent()
 
-    fun loadTrackIntoWebView(webView: WebView, target: YouTubeItem, forceDirectWatch: Boolean) {
+    fun loadTrackIntoWebView(webView: WebView, target: YouTubeItem, forceDirectWatch: Boolean = false) {
         val safeId = target.id.replace("'", "").trim()
         webView.stopLoading()
         if (forceDirectWatch && !target.isPlaylist) {
             webView.loadUrl(
-                "https://m.youtube.com/watch?v=$safeId&autoplay=1",
-                mapOf("Referer" to "https://m.youtube.com/")
+                "https://www.youtube.com/embed/$safeId?autoplay=1&playsinline=1&enablejsapi=1&origin=https://www.youtube.com",
+                mapOf("Referer" to "https://www.youtube.com/")
             )
         } else {
             val embedHtml = """
@@ -867,7 +867,7 @@ fun YouTubeWatchScreen(
                   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
                   <meta name="referrer" content="strict-origin-when-cross-origin">
                   <style>
-                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
                     #player { width: 100%; height: 100%; border: 0; }
                   </style>
                 </head>
@@ -880,7 +880,7 @@ fun YouTubeWatchScreen(
                       player = new YT.Player('player', {
                         width: '100%',
                         height: '100%',
-                        ${if (target.isPlaylist) "playerVars: { listType: 'playlist', list: '$safeId', playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 }," else "videoId: '$safeId', playerVars: { playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 },"}
+                        ${if (target.isPlaylist) "playerVars: { listType: 'playlist', list: '$safeId', playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1, origin: 'https://www.youtube.com' }," else "videoId: '$safeId', playerVars: { playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1, origin: 'https://www.youtube.com' },"}
                         events: {
                           'onReady': function(e) {
                             try { e.target.playVideo(); } catch (_) {}
@@ -895,11 +895,17 @@ fun YouTubeWatchScreen(
                                   window.VynoraBridge.onProgress(cur, dur, playing, hasFrames);
                                 }
                               } catch (_) {}
-                            }, 800);
+                            }, 500);
                           },
                           'onStateChange': function(e) {
-                            if (e.data === 0 && window.VynoraBridge) {
-                              window.VynoraBridge.onEnded();
+                            if (window.VynoraBridge) {
+                              var st = Number(e.data || -1);
+                              var playing = (st === 1 || st === 3);
+                              if (st === 0) {
+                                window.VynoraBridge.onEnded();
+                              } else {
+                                window.VynoraBridge.onProgress(0, 0, playing, playing);
+                              }
                             }
                           },
                           'onError': function(e) {
@@ -916,7 +922,7 @@ fun YouTubeWatchScreen(
             """.trimIndent()
 
             webView.loadDataWithBaseURL(
-                "https://www.youtube-nocookie.com/",
+                "https://www.youtube.com",
                 embedHtml,
                 "text/html",
                 "UTF-8",
@@ -928,13 +934,11 @@ fun YouTubeWatchScreen(
     // Switch tracks inside the single persistent WebView without destroying/recreating it (0ms UI switch!)
     androidx.compose.runtime.LaunchedEffect(item.id) {
         val wv = playerWebView.value ?: return@LaunchedEffect
-        val direct = YouTubeMusicFilter.prefersDirectWatchStream(item.channelTitle, item.title)
-        usingTheatreFallback = direct
         videoHasVisibleFrames = false
         ytPositionSec = 0f
         ytDurationSec = 0f
         ytIsPlaying = true
-        loadTrackIntoWebView(wv, item, direct)
+        loadTrackIntoWebView(wv, item, forceDirectWatch = false)
     }
 
     // Only release WebView when leaving YouTubeWatchScreen altogether
@@ -1155,9 +1159,8 @@ fun YouTubeWatchScreen(
                             }
                         }
 
-                        val direct = YouTubeMusicFilter.prefersDirectWatchStream(item.channelTitle, item.title)
-                        usingTheatreFallback = direct
-                        loadTrackIntoWebView(this, item, direct)
+                        usingTheatreFallback = false
+                        loadTrackIntoWebView(this, item, forceDirectWatch = false)
                     }
                 }
             )

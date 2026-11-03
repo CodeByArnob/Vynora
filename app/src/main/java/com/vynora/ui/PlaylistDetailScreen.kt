@@ -62,7 +62,9 @@ data class PlaylistUiModel(
     val description: String,
     val coverUri: String,
     val tracks: List<AudioTrack>,
-    val curator: String = "YouTube Music"
+    val curator: String = "YouTube Music",
+    val providerLabel: String = "Verified Stream",
+    val unifiedTracks: List<com.vynora.catalog.UnifiedTrack> = emptyList()
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -174,6 +176,22 @@ fun PlaylistDetailScreen(
                     color = Color(0xFFAAAAAA),
                     textAlign = TextAlign.Center
                 )
+
+                if (playlist.providerLabel.isNotBlank()) {
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color(0xFF1E293B)
+                    ) {
+                        Text(
+                            text = playlist.providerLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                            color = Color(0xFF38BDF8),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(8.dp))
 

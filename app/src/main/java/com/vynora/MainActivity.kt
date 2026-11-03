@@ -364,6 +364,10 @@ private fun VynoraApp(
                         onSearchVideos = youTubeViewModel::searchVideos,
                         onFilterLocalInstant = youTubeViewModel::filterLocalInstant,
                         onOpenSearch = { /* Toggle search */ },
+                        onOpenYouTubeItem = { ytItem ->
+                            youTubeViewModel.recordPlayed(ytItem)
+                            selectedYouTubeItem = ytItem
+                        },
                         modifier = Modifier.padding(padding)
                     )
                     1 -> {

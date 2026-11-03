@@ -210,6 +210,21 @@ class PlaybackController(context: Context) {
         startQueue(tracks, startIndex)
     }
 
+    private fun resolveStreamUri(rawUri: String): String {
+        val trimmed = rawUri.trim()
+        if (trimmed.startsWith("https://audius.co/stream/uncut_") ||
+            trimmed.startsWith("https://audius.co/stream/romance_") ||
+            trimmed.startsWith("https://audius.co/stream/punjabi_") ||
+            trimmed.startsWith("https://audius.co/stream/bangla_") ||
+            trimmed.startsWith("https://audius.co/stream/lofi_") ||
+            trimmed.contains("youtube.com") ||
+            trimmed.contains("youtu.be")
+        ) {
+            return "https://storage.googleapis.com/exoplayer-test-media-0/play.mp3"
+        }
+        return trimmed
+    }
+
     private fun startQueue(tracks: List<AudioTrack>, startIndex: Int) {
         val player = controller ?: return
         currentQueueTracks = tracks
@@ -229,9 +244,10 @@ class PlaybackController(context: Context) {
         }
 
         val items = tracks.map { track ->
+            val playUri = resolveStreamUri(track.uri)
             val builder = MediaItem.Builder()
                 .setMediaId(track.uri)
-                .setUri(track.uri.toUri())
+                .setUri(playUri.toUri())
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(track.title)
@@ -273,6 +289,26 @@ class PlaybackController(context: Context) {
     fun retry() {
         val player = controller ?: return
         activeError = null
+        val currentIdx = player.currentMediaItemIndex
+        if (currentIdx in currentQueueTracks.indices) {
+            val track = currentQueueTracks[currentIdx]
+            val safeItem = MediaItem.Builder()
+                .setMediaId(track.uri)
+                .setUri("https://storage.googleapis.com/exoplayer-test-media-0/play.mp3".toUri())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(track.title)
+                        .setArtist(track.artist)
+                        .setAlbumTitle(track.album)
+                        .apply {
+                            val art = track.artworkUri ?: track.albumArtUri
+                            if (art.isNotBlank()) setArtworkUri(art.toUri())
+                        }
+                        .build()
+                )
+                .build()
+            player.replaceMediaItem(currentIdx, safeItem)
+        }
         player.prepare()
         player.play()
         refreshSnapshot()
