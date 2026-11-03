@@ -76,8 +76,8 @@ The latest verified Android build is published directly under [**GitHub Releases
 
 | Asset | Direct 1-Click Link | Size | SHA-256 Digest |
 | :--- | :--- | :--- | :--- |
-| **`Vynora-v0.7.0-debug.apk`** | [**⬇️ Download APK (v0.7.0)**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.7.0-debug.apk) | `22.3 MB` | `1695ab7cc275c9087dfb8967c7785da080b5a7fd8fd25410422b33f61165841f` |
-| **`Vynora-latest.apk`** | [**⬇️ Download Latest APK**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-latest.apk) | `22.3 MB` | `1695ab7cc275c9087dfb8967c7785da080b5a7fd8fd25410422b33f61165841f` |
+| **`Vynora-v0.7.0-debug.apk`** | [**⬇️ Download APK (v0.7.0)**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.7.0-debug.apk) | `26.6 MB` | `ed005237538fa09af74524feed926b35f4e7241280ef23d9114db34e10182f93` |
+| **`Vynora-latest.apk`** | [**⬇️ Download Latest APK**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-latest.apk) | `26.6 MB` | `ed005237538fa09af74524feed926b35f4e7241280ef23d9114db34e10182f93` |
 | **`SHA256SUMS.txt`** | [**🔐 View Checksums**](https://github.com/CodeByArnob/Vynora/releases/download/v0.7.0/SHA256SUMS.txt) | `174 B` | Verified |
 
 ---

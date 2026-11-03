@@ -9,9 +9,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,16 +27,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SkipNext
@@ -53,16 +50,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -78,19 +73,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import com.vynora.library.AudioTrack
 import com.vynora.library.LibraryViewModel
-import com.vynora.library.PlaylistEntity
 import com.vynora.playback.PlaybackController
 import com.vynora.playback.PlaybackSnapshot
 import com.vynora.playback.PlaybackStatus
+import com.vynora.ui.HomeDiscoveryScreen
 import com.vynora.ui.NowPlayingScreen
+import com.vynora.ui.PlaylistDetailScreen
+import com.vynora.ui.PlaylistUiModel
 import com.vynora.visualizer.AudioVisualizerManager
-import com.vynora.youtube.YouTubeHomeScreen
 import com.vynora.youtube.YouTubeItem
 import com.vynora.youtube.YouTubeViewModel
 import com.vynora.youtube.YouTubeWatchScreen
@@ -142,7 +139,9 @@ private fun VynoraApp(
     val youTubeState by youTubeViewModel.state.collectAsStateWithLifecycle()
     val visualizerFrame by visualizerManager.currentFrame.collectAsStateWithLifecycle()
 
+    var selectedPlaylistForDetail by remember { mutableStateOf<PlaylistUiModel?>(null) }
     var selectedYouTubeItem by remember { mutableStateOf<YouTubeItem?>(null) }
+
     var hasStoragePermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -191,14 +190,14 @@ private fun VynoraApp(
         }
     }
 
-    // Run smooth visualizer animation tick loop during active playback
+    // Run smooth visualizer animation tick loop during active playback (~30 FPS)
     LaunchedEffect(snapshot.isPlaying, snapshot.status) {
         if (snapshot.isPlaying || snapshot.status == PlaybackStatus.PLAYING) {
-            var startTime = System.currentTimeMillis()
+            val startTime = System.currentTimeMillis()
             while (isActive && snapshot.isPlaying) {
                 val now = System.currentTimeMillis()
                 visualizerManager.tick(now - startTime, isPlaying = true)
-                delay(33L) // ~30 FPS for buttery smooth bars and low CPU usage
+                delay(33L)
             }
         } else {
             visualizerManager.tick(0L, isPlaying = false)
@@ -210,10 +209,6 @@ private fun VynoraApp(
         if (hasStoragePermission) libraryViewModel.refreshLibrary()
     }
 
-    val startAudiusFallbackPlayback: () -> Unit = {
-        playbackController.pause()
-    }
-
     val currentAudioTrackFavorite = remember(snapshot.queue, snapshot.currentIndex, favorites) {
         val curr = snapshot.queue.getOrNull(snapshot.currentIndex)
         curr != null && favorites.any { it.uri == curr.uri }
@@ -222,247 +217,409 @@ private fun VynoraApp(
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Color(0xFF1DB954),
-            onPrimary = Color(0xFF062010),
+            onPrimary = Color(0xFF000000),
             secondary = Color(0xFF38BDF8),
-            background = Color(0xFF07090E),
-            surface = Color(0xFF111622),
-            surfaceVariant = Color(0xFF182030)
+            background = Color(0xFF000000),
+            surface = Color(0xFF121212),
+            surfaceVariant = Color(0xFF212121)
         )
     ) {
         Scaffold(
-            containerColor = Color(0xFF07090E),
-            topBar = {
-                if (selectedTab != 5 && selectedTab != 4) {
-                    TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color(0xFF07090E)
-                        ),
-                        title = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(
-                                    modifier = Modifier.size(34.dp),
-                                    shape = CircleShape,
-                                    color = Color(0xFF13281E)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            Icons.Rounded.GraphicEq,
-                                            contentDescription = null,
-                                            tint = Color(0xFF1DB954),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.width(10.dp))
-                                Text(
-                                    "Vynora",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = {
-                                youTubeViewModel.searchVideos(youTubeState.activeQuery)
-                                youTubeViewModel.loadAudiusTrending()
-                                if (hasStoragePermission) libraryViewModel.refreshLibrary()
-                            }) {
-                                Icon(
-                                    Icons.Rounded.Refresh,
-                                    contentDescription = "Refresh music",
-                                    tint = Color(0xFFCBD5E1)
-                                )
-                            }
-                        }
-                    )
-                }
-            },
+            containerColor = Color(0xFF000000),
             bottomBar = {
-                Column {
-                    if (selectedTab != 4 && selectedTab != 5 &&
-                        snapshot.title != "Nothing playing" &&
-                        snapshot.title != "Player unavailable"
-                    ) {
-                        MiniPlayer(
+                // Only show docked MiniPlayer & Bottom Nav when not on full Now Playing or full Theatre screen
+                if (selectedTab != 4 && selectedYouTubeItem == null) {
+                    Column {
+                        // 1. YouTube Music / Spotify Docked MiniPlayer (Matches Both Images!)
+                        DockedMiniPlayer(
                             snapshot = snapshot,
                             controller = playbackController,
                             onOpen = { selectedTab = 4 }
                         )
-                    }
-                    NavigationBar(containerColor = Color(0xFF0D121C)) {
-                        val tabs = listOf(
-                            "Home" to Icons.Rounded.Home,
-                            "Library" to Icons.Rounded.LibraryMusic,
-                            "Favorites" to Icons.Rounded.Favorite,
-                            "Playlists" to Icons.AutoMirrored.Rounded.QueueMusic,
-                            "Playing" to Icons.Rounded.GraphicEq
-                        )
-                        tabs.forEachIndexed { index, pair ->
-                            NavigationBarItem(
-                                selected = selectedTab == index || (selectedTab == 5 && index == 4),
-                                onClick = { selectedTab = index },
-                                icon = { Icon(pair.second, contentDescription = null) },
-                                label = { Text(pair.first, maxLines = 1) }
+
+                        // 2. Bottom Navigation Bar (5 tabs matching Image 1 & 2)
+                        NavigationBar(
+                            containerColor = Color(0xFF000000),
+                            tonalElevation = 0.dp
+                        ) {
+                            val tabs = listOf(
+                                Triple(0, "Home", Icons.Rounded.Home),
+                                Triple(1, "Samples", Icons.AutoMirrored.Rounded.PlaylistPlay),
+                                Triple(2, "Explore", Icons.Rounded.Explore),
+                                Triple(3, "Library", Icons.Rounded.Bookmark),
+                                Triple(5, "Upgrade", Icons.AutoMirrored.Rounded.QueueMusic)
                             )
+                            tabs.forEach { (index, title, icon) ->
+                                val isSelected = (selectedTab == index) || (selectedTab == 0 && selectedPlaylistForDetail != null && index == 0)
+                                NavigationBarItem(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedPlaylistForDetail = null
+                                        selectedTab = index
+                                    },
+                                    icon = {
+                                        Icon(
+                                            icon,
+                                            contentDescription = title,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            title,
+                                            fontSize = 10.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = Color.White,
+                                        selectedTextColor = Color.White,
+                                        unselectedIconColor = Color(0xFFAAAAAA),
+                                        unselectedTextColor = Color(0xFFAAAAAA),
+                                        indicatorColor = Color.Transparent
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
         ) { padding ->
-            when (selectedTab) {
-                0 -> YouTubeHomeScreen(
-                    state = youTubeState,
-                    onSearchVideos = youTubeViewModel::searchVideos,
-                    onSearchPlaylists = youTubeViewModel::searchPlaylists,
-                    onSelectCategory = youTubeViewModel::selectCategory,
-                    onFilterLocalInstant = youTubeViewModel::filterLocalInstant,
-                    onOpen = { item ->
-                        playbackController.pause()
-                        youTubeViewModel.recordPlayed(item)
-                        selectedYouTubeItem = item
-                        selectedTab = 5
-                    },
-                    onPlayAudiusTrack = { audiusTrack ->
-                        val streamQueue = youTubeState.audiusTracks.map {
-                            it.toAudioTrack(youTubeViewModel.audiusStreamUrl(it.id))
+            // If user opened a playlist detail (Matches Image 1!)
+            if (selectedPlaylistForDetail != null && selectedTab == 0) {
+                PlaylistDetailScreen(
+                    playlist = selectedPlaylistForDetail!!,
+                    currentTrackUri = snapshot.queue.getOrNull(snapshot.currentIndex)?.uri,
+                    isPlaying = snapshot.isPlaying,
+                    onBack = { selectedPlaylistForDetail = null },
+                    onPlayAll = {
+                        val pl = selectedPlaylistForDetail!!
+                        if (pl.tracks.isNotEmpty()) {
+                            playbackController.playQueue(pl.tracks, 0)
                         }
-                        val index = youTubeState.audiusTracks.indexOfFirst { it.id == audiusTrack.id }.coerceAtLeast(0)
-                        selectedYouTubeItem = null
-                        playbackController.playQueue(streamQueue, index)
-                        selectedTab = 4
                     },
-                    onSearchAudius = youTubeViewModel::searchAudius,
-                    onToggleFavoriteVideo = youTubeViewModel::toggleFavoriteVideo,
-                    modifier = Modifier.padding(padding)
-                )
-                1 -> LibraryScreen(
-                    modifier = Modifier.padding(padding),
-                    tracks = tracks,
-                    query = query,
-                    onQueryChange = { query = it },
-                    isScanning = isScanning,
-                    hasPermission = hasStoragePermission,
-                    scanError = scanError,
-                    onGrantPermission = { storagePermissionLauncher.launch(storagePermission) },
-                    onPlay = { index ->
-                        selectedYouTubeItem = null
-                        playbackController.playQueue(tracks, index)
-                        selectedTab = 4
+                    onTrackSelected = { trackIdx ->
+                        val pl = selectedPlaylistForDetail!!
+                        playbackController.playQueue(pl.tracks, trackIdx)
                     },
-                    onRescan = libraryViewModel::refreshLibrary,
-                    onFavorite = libraryViewModel::setFavorite
-                )
-                2 -> TrackCollectionScreen(
-                    modifier = Modifier.padding(padding),
-                    title = "Favorites",
-                    subtitle = "${favorites.size} local songs · ${youTubeState.favoriteVideoIds.size} saved videos",
-                    tracks = favorites,
-                    onPlay = { index ->
-                        selectedYouTubeItem = null
-                        playbackController.playQueue(favorites, index)
-                        selectedTab = 4
-                    },
-                    onFavorite = { track -> libraryViewModel.setFavorite(track, false) }
-                )
-                3 -> PlaylistsScreen(
-                    modifier = Modifier.padding(padding),
-                    libraryViewModel = libraryViewModel,
-                    playbackController = playbackController,
-                    onPlayTrack = { selectedTab = 4 }
-                )
-                4 -> selectedYouTubeItem?.let { item ->
-                    YouTubeWatchScreen(
-                        item = item,
-                        queue = youTubeState.videos,
-                        snapshot = snapshot,
-                        controller = playbackController,
-                        onBack = { selectedTab = 0 },
-                        onSelectQueueItem = { next ->
-                            youTubeViewModel.recordPlayed(next)
-                            selectedYouTubeItem = next
-                        },
-                        onSkipNext = {
-                            val list = youTubeState.videos
-                            if (list.isNotEmpty()) {
-                                val nextIdx = (list.indexOfFirst { it.id == item.id } + 1) % list.size
-                                val nextItem = list[nextIdx]
-                                youTubeViewModel.recordPlayed(nextItem)
-                                selectedYouTubeItem = nextItem
-                            }
-                        },
-                        onSkipPrevious = {
-                            val list = youTubeState.videos
-                            if (list.isNotEmpty()) {
-                                val prevIdx = (list.indexOfFirst { it.id == item.id } - 1 + list.size) % list.size
-                                val prevItem = list[prevIdx]
-                                youTubeViewModel.recordPlayed(prevItem)
-                                selectedYouTubeItem = prevItem
-                            }
-                        },
-                        onAutoFallbackToAudio = startAudiusFallbackPlayback,
-                        isFavorite = youTubeState.favoriteVideoIds.contains(item.id),
-                        onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(item.id) },
-                        modifier = Modifier.padding(padding)
-                    )
-                } ?: NowPlayingScreen(
-                    snapshot = snapshot,
-                    controller = playbackController,
-                    visualizerFrame = visualizerFrame,
-                    onBack = { selectedTab = 0 },
                     onToggleFavorite = { track ->
-                        libraryViewModel.setFavorite(track, !currentAudioTrackFavorite)
-                    },
-                    isCurrentFavorite = currentAudioTrackFavorite,
-                    onRequestRecordPermission = {
-                        recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        libraryViewModel.setFavorite(track, !track.isFavorite)
                     },
                     modifier = Modifier.padding(padding)
                 )
-                else -> selectedYouTubeItem?.let { item ->
-                    YouTubeWatchScreen(
-                        item = item,
-                        queue = youTubeState.videos,
-                        snapshot = snapshot,
-                        controller = playbackController,
-                        onBack = { selectedTab = 0 },
-                        onSelectQueueItem = { next ->
-                            youTubeViewModel.recordPlayed(next)
-                            selectedYouTubeItem = next
+            } else {
+                when (selectedTab) {
+                    0 -> HomeDiscoveryScreen(
+                        state = youTubeState,
+                        onPlaylistSelected = { playlist ->
+                            selectedPlaylistForDetail = playlist
                         },
-                        onSkipNext = {
-                            val list = youTubeState.videos
-                            if (list.isNotEmpty()) {
-                                val nextIdx = (list.indexOfFirst { it.id == item.id } + 1) % list.size
-                                val nextItem = list[nextIdx]
-                                youTubeViewModel.recordPlayed(nextItem)
-                                selectedYouTubeItem = nextItem
-                            }
+                        onTrackSelected = { track ->
+                            playbackController.playQueue(listOf(track), 0)
                         },
-                        onSkipPrevious = {
-                            val list = youTubeState.videos
-                            if (list.isNotEmpty()) {
-                                val prevIdx = (list.indexOfFirst { it.id == item.id } - 1 + list.size) % list.size
-                                val prevItem = list[prevIdx]
-                                youTubeViewModel.recordPlayed(prevItem)
-                                selectedYouTubeItem = prevItem
-                            }
-                        },
-                        onAutoFallbackToAudio = startAudiusFallbackPlayback,
-                        isFavorite = youTubeState.favoriteVideoIds.contains(item.id),
-                        onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(item.id) },
+                        onSearchVideos = youTubeViewModel::searchVideos,
+                        onFilterLocalInstant = youTubeViewModel::filterLocalInstant,
+                        onOpenSearch = { /* Toggle search */ },
                         modifier = Modifier.padding(padding)
                     )
-                } ?: YouTubeHomeScreen(
-                    state = youTubeState,
-                    onSearchVideos = youTubeViewModel::searchVideos,
-                    onSearchPlaylists = youTubeViewModel::searchPlaylists,
-                    onOpen = { item ->
-                        youTubeViewModel.recordPlayed(item)
-                        selectedYouTubeItem = item
-                        selectedTab = 5
-                    },
-                    modifier = Modifier.padding(padding)
+                    1 -> {
+                        // Samples Tab: Curated Video/Audio Discoveries
+                        val trendingItem = youTubeState.videos.firstOrNull()
+                        if (trendingItem != null) {
+                            YouTubeWatchScreen(
+                                item = trendingItem,
+                                queue = youTubeState.videos,
+                                snapshot = snapshot,
+                                controller = playbackController,
+                                onBack = { selectedTab = 0 },
+                                onSelectQueueItem = { next ->
+                                    youTubeViewModel.recordPlayed(next)
+                                    selectedYouTubeItem = next
+                                },
+                                isFavorite = youTubeState.favoriteVideoIds.contains(trendingItem.id),
+                                onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(trendingItem.id) },
+                                modifier = Modifier.padding(padding)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxSize().padding(padding),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color(0xFF1DB954))
+                            }
+                        }
+                    }
+                    2 -> {
+                        // Explore Tab: Mood Categories & Audius Trending
+                        ExploreScreen(
+                            state = youTubeState,
+                            onPlayAudius = { audiusTrack ->
+                                val streamQueue = youTubeState.audiusTracks.map {
+                                    it.toAudioTrack(youTubeViewModel.audiusStreamUrl(it.id))
+                                }
+                                val index = youTubeState.audiusTracks.indexOfFirst { it.id == audiusTrack.id }.coerceAtLeast(0)
+                                playbackController.playQueue(streamQueue, index)
+                                selectedTab = 4
+                            },
+                            onSearchVideos = youTubeViewModel::searchVideos,
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                    3 -> {
+                        // Library Tab: Offline MediaStore tracks & Favorites
+                        LibraryScreen(
+                            modifier = Modifier.padding(padding),
+                            tracks = tracks,
+                            query = query,
+                            onQueryChange = { query = it },
+                            isScanning = isScanning,
+                            hasPermission = hasStoragePermission,
+                            scanError = scanError,
+                            onGrantPermission = { storagePermissionLauncher.launch(storagePermission) },
+                            onPlay = { index ->
+                                selectedYouTubeItem = null
+                                playbackController.playQueue(tracks, index)
+                                selectedTab = 4
+                            },
+                            onRescan = libraryViewModel::refreshLibrary,
+                            onFavorite = libraryViewModel::setFavorite
+                        )
+                    }
+                    4 -> {
+                        // Full-screen Now Playing Screen with Real-Time Bass-Reactive Visualizer!
+                        NowPlayingScreen(
+                            snapshot = snapshot,
+                            controller = playbackController,
+                            visualizerFrame = visualizerFrame,
+                            onBack = { selectedTab = 0 },
+                            onToggleFavorite = { track ->
+                                libraryViewModel.setFavorite(track, !currentAudioTrackFavorite)
+                            },
+                            isCurrentFavorite = currentAudioTrackFavorite,
+                            onRequestRecordPermission = {
+                                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                    5 -> {
+                        // Playlists / User Collections
+                        PlaylistsScreen(
+                            modifier = Modifier.padding(padding),
+                            libraryViewModel = libraryViewModel,
+                            playbackController = playbackController,
+                            onPlayTrack = { selectedTab = 4 }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Docked MiniPlayer matching the exact layout in Image 1 and Image 2:
+ * Square artwork thumbnail on left, title + artist (or "Nothing is playing"), Play/Pause on right.
+ */
+@Composable
+private fun DockedMiniPlayer(
+    snapshot: PlaybackSnapshot,
+    controller: PlaybackController,
+    onOpen: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable(onClick = onOpen),
+        color = Color(0xFF212121),
+        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Square Artwork Thumbnail
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFF333333)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!snapshot.artworkUri.isNullOrBlank()) {
+                    AsyncImage(
+                        model = snapshot.artworkUri,
+                        contentDescription = snapshot.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Rounded.Album,
+                        contentDescription = null,
+                        tint = Color(0xFF666666),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            // Title + Subtitle
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                val isIdle = snapshot.title == "Nothing playing" || snapshot.title.isBlank()
+                Text(
+                    text = if (isIdle) "Nothing is playing" else snapshot.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!isIdle) {
+                    Text(
+                        text = snapshot.artist,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = Color(0xFFAAAAAA),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Play / Pause / Buffering Action
+            IconButton(onClick = controller::togglePlayback) {
+                when (snapshot.status) {
+                    PlaybackStatus.BUFFERING, PlaybackStatus.LOADING -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    else -> {
+                        Icon(
+                            if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExploreScreen(
+    state: com.vynora.youtube.YouTubeHomeState,
+    onPlayAudius: (com.vynora.audius.AudiusTrack) -> Unit,
+    onSearchVideos: (String) -> Unit,
+    modifier: Modifier
+) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF000000))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+        item {
+            Text(
+                "Explore Music & Trends",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                listOf("New releases", "Charts", "Moods & genres").forEach { category ->
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp)
+                            .clickable { onSearchVideos("$category official songs") },
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF222222)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                category,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Text(
+                "Trending Streams",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        items(state.audiusTracks) { track ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPlayAudius(track) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF1E1E1E))
+                ) {
+                    AsyncImage(
+                        model = track.artworkUrl,
+                        contentDescription = track.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        track.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        track.artist,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFAAAAAA),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(
+                    Icons.Rounded.PlayArrow,
+                    contentDescription = null,
+                    tint = Color(0xFF1DB954),
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -491,38 +648,43 @@ private fun LibraryScreen(
                 it.album.contains(query, ignoreCase = true)
         }
     }
-    Column(modifier.fillMaxSize().padding(20.dp)) {
-        Text("Local Audio Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+    Column(
+        modifier
+            .fillMaxSize()
+            .background(Color(0xFF000000))
+            .padding(16.dp)
+    ) {
+        Text("Your Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
         Text(
-            "${tracks.size} offline MP3/FLAC tracks on device",
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            "${tracks.size} tracks saved on device",
+            color = Color(0xFFAAAAAA)
         )
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Filter local songs, artists, albums") },
+            placeholder = { Text("Search songs, artists, albums...") },
             singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) }
+            shape = RoundedCornerShape(12.dp),
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White) }
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
         when {
             !hasPermission -> EmptyLibrary(
-                "Grant audio permission",
-                "Allow Vynora to scan offline MP3 and FLAC files stored on your device.",
-                "Allow access",
+                "Audio permission required",
+                "Allow Vynora to scan your device music library.",
+                "Grant Permission",
                 onGrantPermission
             )
             isScanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color(0xFF1DB954))
             }
-            scanError != null -> EmptyLibrary("Scan failed", scanError, "Try again", onRescan)
+            scanError != null -> EmptyLibrary("Scan failed", scanError, "Retry", onRescan)
             filtered.isEmpty() -> EmptyLibrary(
-                "No local audio found",
-                "Add MP3 or FLAC files to your device Music folder or rescan.",
-                "Rescan library",
+                "No audio files found",
+                "Add music to your device or rescan.",
+                "Rescan",
                 onRescan
             )
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -539,31 +701,6 @@ private fun LibraryScreen(
 }
 
 @Composable
-private fun TrackCollectionScreen(
-    modifier: Modifier,
-    title: String,
-    subtitle: String,
-    tracks: List<AudioTrack>,
-    onPlay: (Int) -> Unit,
-    onFavorite: (AudioTrack) -> Unit
-) {
-    Column(modifier.fillMaxSize().padding(20.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(16.dp))
-        if (tracks.isEmpty()) {
-            EmptyLibrary("Nothing saved yet", "Tap the heart on a song to add it here.", "Browse library", {})
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                items(tracks, key = { it.uri }) { track ->
-                    TrackRow(track, onClick = { onPlay(tracks.indexOf(track)) }, onFavorite = { onFavorite(track) })
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun TrackRow(
     track: AudioTrack,
     onClick: () -> Unit,
@@ -573,16 +710,16 @@ private fun TrackRow(
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(13.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF1DB954), Color(0xFF123524)))),
+                .size(46.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(0xFF222222)),
             contentAlignment = Alignment.Center
         ) {
             if (!track.artworkUri.isNullOrBlank()) {
@@ -593,24 +730,20 @@ private fun TrackRow(
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Icon(Icons.Rounded.Album, contentDescription = null, tint = Color.Black)
+                Icon(Icons.Rounded.Album, contentDescription = null, tint = Color(0xFF666666))
             }
         }
-        Column(Modifier.weight(1f).padding(start = 13.dp, end = 8.dp)) {
-            Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold, color = Color.White)
             Text(
-                track.artist,
+                "${track.artist} • ${track.durationLabel}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color(0xFFAAAAAA)
             )
         }
-        Text(
-            track.durationLabel,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
         IconButton(onClick = onFavorite) {
             Icon(
                 if (favoriteToggle) {
@@ -618,12 +751,8 @@ private fun TrackRow(
                 } else {
                     Icons.Rounded.RemoveCircleOutline
                 },
-                contentDescription = if (favoriteToggle) {
-                    if (track.isFavorite) "Remove from favorites" else "Add to favorites"
-                } else {
-                    "Remove from playlist"
-                },
-                tint = if (favoriteToggle && track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                contentDescription = null,
+                tint = if (favoriteToggle && track.isFavorite) Color(0xFF1DB954) else Color(0xFFAAAAAA)
             )
         }
     }
@@ -636,110 +765,11 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            Modifier.size(92.dp).clip(CircleShape).background(Color(0xFF14241B)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.AutoMirrored.Rounded.QueueMusic,
-                contentDescription = null,
-                modifier = Modifier.size(42.dp),
-                tint = Color(0xFF1DB954)
-            )
-        }
-        Spacer(Modifier.height(20.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
         Spacer(Modifier.height(8.dp))
-        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+        Text(subtitle, color = Color(0xFFAAAAAA), style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(18.dp))
         Button(onClick = onAction) { Text(action) }
-    }
-}
-
-@Composable
-private fun MiniPlayer(
-    snapshot: PlaybackSnapshot,
-    controller: PlaybackController,
-    onOpen: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF151F2E),
-        tonalElevation = 6.dp
-    ) {
-        Row(
-            Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(42.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFF132A1E)
-            ) {
-                if (!snapshot.artworkUri.isNullOrBlank()) {
-                    AsyncImage(
-                        model = snapshot.artworkUri,
-                        contentDescription = snapshot.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Rounded.GraphicEq,
-                            contentDescription = null,
-                            tint = Color(0xFF1DB954),
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-            }
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(
-                    snapshot.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    snapshot.artist,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF94A3B8)
-                )
-            }
-
-            // Play / Pause / Buffering indicator
-            IconButton(onClick = controller::togglePlayback) {
-                when (snapshot.status) {
-                    PlaybackStatus.BUFFERING, PlaybackStatus.LOADING -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color(0xFF1DB954),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                    else -> {
-                        Icon(
-                            if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            contentDescription = "Play or pause",
-                            tint = Color(0xFF1DB954)
-                        )
-                    }
-                }
-            }
-
-            IconButton(onClick = controller::skipNext) {
-                Icon(
-                    Icons.Rounded.SkipNext,
-                    contentDescription = "Next track",
-                    tint = Color.White
-                )
-            }
-        }
     }
 }
 
@@ -757,23 +787,29 @@ private fun PlaylistsScreen(
     var name by remember { mutableStateOf("") }
     val selectedPlaylist = playlists.firstOrNull { it.id == selectedId }
 
-    Column(modifier.fillMaxSize().padding(20.dp)) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .background(Color(0xFF000000))
+            .padding(16.dp)
+    ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
                     selectedPlaylist?.name ?: "Playlists",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 Text(
                     if (selectedPlaylist == null) "${playlists.size} collections" else "${selectedTracks.size} songs",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFFAAAAAA)
                 )
             }
             if (selectedPlaylist == null) {
                 Button(onClick = { showCreateDialog = true }) { Text("New playlist") }
             } else {
-                TextButton(onClick = { libraryViewModel.selectPlaylist(null) }) { Text("Back") }
+                TextButton(onClick = { libraryViewModel.selectPlaylist(null) }) { Text("Back", color = Color.White) }
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -781,10 +817,10 @@ private fun PlaylistsScreen(
             selectedPlaylist != null -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { libraryViewModel.addAllTracksToPlaylist(selectedPlaylist.id) }) {
-                        Text("Add library songs")
+                        Text("Add all songs")
                     }
                     TextButton(onClick = { libraryViewModel.deletePlaylist(selectedPlaylist.id) }) {
-                        Text("Delete")
+                        Text("Delete", color = Color(0xFFFF6B6B))
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -792,7 +828,7 @@ private fun PlaylistsScreen(
                     EmptyLibrary(
                         "This playlist is empty",
                         "Add songs from your library to start listening.",
-                        "Add all songs",
+                        "Add songs",
                         { libraryViewModel.addAllTracksToPlaylist(selectedPlaylist.id) }
                     )
                 } else {
@@ -813,8 +849,8 @@ private fun PlaylistsScreen(
             }
             playlists.isEmpty() -> {
                 EmptyLibrary(
-                    "Create your first playlist",
-                    "Collect songs for every mood and moment.",
+                    "No playlists yet",
+                    "Create your first custom playlist collection.",
                     "Create playlist",
                     { showCreateDialog = true }
                 )
@@ -824,25 +860,23 @@ private fun PlaylistsScreen(
                     items(playlists, key = { it.id }) { playlist ->
                         Surface(
                             modifier = Modifier.fillMaxWidth().clickable { libraryViewModel.selectPlaylist(playlist.id) },
-                            shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF1E1E1E)
                         ) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     Icons.AutoMirrored.Rounded.QueueMusic,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = Color(0xFF1DB954)
                                 )
+                                Spacer(Modifier.width(12.dp))
                                 Text(
                                     playlist.name,
-                                    modifier = Modifier.weight(1f).padding(start = 12.dp),
-                                    fontWeight = FontWeight.SemiBold
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                Text(
-                                    "Open",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Text("Open", color = Color(0xFFAAAAAA))
                             }
                         }
                     }
