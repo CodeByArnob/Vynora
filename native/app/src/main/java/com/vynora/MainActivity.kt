@@ -299,7 +299,7 @@ private fun TrackRow(track: AudioTrack, onClick: () -> Unit) {
 @androidx.compose.runtime.Composable
 private fun EmptyLibrary(title: String, subtitle: String, action: String, onAction: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().weight(1f),
+        Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -320,7 +320,7 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
 private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackController) {
     Surface(color = Color(0xFF211B32), tonalElevation = 4.dp) {
         Row(
-            Modifier.fillMaxWidth().clickable { }.padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Rounded.Album, contentDescription = null, tint = Color(0xFFC8B8FF), modifier = Modifier.size(34.dp))
@@ -359,7 +359,7 @@ private fun NowPlayingScreen(
         Text(snapshot.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(30.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { controller.seekTo(0L) }) { Icon(Icons.Rounded.SkipPrevious, contentDescription = "Restart track") }
+            IconButton(onClick = controller::skipPrevious) { Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous track") }
             Spacer(Modifier.size(20.dp))
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary) {
                 IconButton(onClick = controller::togglePlayback, modifier = Modifier.size(68.dp)) {
@@ -372,7 +372,7 @@ private fun NowPlayingScreen(
                 }
             }
             Spacer(Modifier.size(20.dp))
-            IconButton(onClick = { }) { Icon(Icons.Rounded.SkipNext, contentDescription = "Next track") }
+            IconButton(onClick = controller::skipNext) { Icon(Icons.Rounded.SkipNext, contentDescription = "Next track") }
         }
         Spacer(Modifier.height(18.dp))
         Text("Background playback powered by Android Media3", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
