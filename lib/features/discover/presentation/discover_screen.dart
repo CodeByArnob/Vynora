@@ -5,9 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/youtube_trending_service.dart';
 import '../domain/trending_video.dart';
 
-final trendingServiceProvider = Provider<YouTubeTrendingService>(
-  (ref) => YouTubeTrendingService(),
-);
+final trendingServiceProvider = Provider<YouTubeTrendingService>((ref) {
+  final service = YouTubeTrendingService();
+  ref.onDispose(service.close);
+  return service;
+});
 final trendingMusicProvider = FutureProvider<List<TrendingVideo>>(
   (ref) => ref.watch(trendingServiceProvider).fetchTrendingMusic(),
 );
