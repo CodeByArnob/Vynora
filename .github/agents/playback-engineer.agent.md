@@ -19,7 +19,7 @@ Scope:
 
 Boundaries:
 - Do not replace Media3 with a different playback engine without a documented decision.
-- Never extract/download YouTube audio; only user-accessible local files are playable.
+- Never extract/download restricted streams; only Audius streams and user-accessible local files are playable; only user-accessible local files are playable.
 - Never use a static global player instance.
 - Cover service lifecycle, focus loss, permission edge cases and queue transitions with tests.
 - Do not claim device behavior verified unless a physical/emulated device test ran.

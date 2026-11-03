@@ -1,6 +1,6 @@
 package com.vynora.catalog
 
-import com.vynora.archive.ArchiveAudioRepository
+import com.vynora.audius.AudiusSearchEngine
 import com.vynora.audius.AudiusTrack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,24 +11,28 @@ import org.junit.Test
 class UnifiedCatalogTest {
 
     @Test
-    fun testCuratedBollywoodAlbumsHaveValidStreamsAndMetadata() {
+    fun testCuratedAudiusAlbumsHaveValidStreamsAndMetadata() {
         val repo = UnifiedCatalogRepository()
-        val albums = repo.getCuratedBollywoodAlbums()
+        val albums = repo.getCuratedAudiusAlbums()
 
-        assertTrue("Expected curated albums to be populated", albums.size >= 5)
+        assertTrue("Expected curated albums to be populated", albums.size >= 4)
 
         albums.forEach { album ->
             assertFalse("Album id cannot be blank", album.id.isBlank())
             assertFalse("Album title cannot be blank", album.title.isBlank())
             assertFalse("Album artist cannot be blank", album.artist.isBlank())
             assertFalse("Album coverUri cannot be blank", album.coverArtUri.isBlank())
+            assertEquals(AudioSourceProvider.AUDIUS, album.provider)
             assertTrue("Album must contain at least 2 tracks", album.tracks.size >= 2)
 
             album.tracks.forEach { track ->
                 assertFalse("Track id cannot be blank", track.id.isBlank())
                 assertFalse("Track title cannot be blank", track.title.isBlank())
                 assertFalse("Track artist cannot be blank", track.artist.isBlank())
-                assertTrue("Stream URL must be valid HTTP/HTTPS: ${track.streamUrl}", track.streamUrl.startsWith("http://") || track.streamUrl.startsWith("https://"))
+                assertTrue(
+                    "Stream URL must be valid HTTP/HTTPS: ${track.streamUrl}",
+                    track.streamUrl.startsWith("http://") || track.streamUrl.startsWith("https://")
+                )
                 assertFalse("Stream URL must NOT be a dummy uncut placeholder", track.streamUrl.contains("uncut_"))
                 assertTrue("Duration must be positive", track.durationMs > 0L)
             }
@@ -36,19 +40,16 @@ class UnifiedCatalogTest {
     }
 
     @Test
-    fun testArchiveCuratedAlbumsHavePlayableStreams() {
-        val archiveRepo = ArchiveAudioRepository()
-        val albums = archiveRepo.getCuratedAlbums()
+    fun testAudiusSearchEnginePhoneticAndTypoCorrection() {
+        val (corrected1, suggestion1) = AudiusSearchEngine.smartCorrectQuery("arijt sing")
+        assertEquals("Arijit Singh", corrected1)
+        assertNotNull(suggestion1)
 
-        assertTrue("Expected Archive.org curated albums", albums.isNotEmpty())
-        albums.forEach { album ->
-            assertEquals(AudioSourceProvider.ARCHIVE_ORG, album.provider)
-            album.tracks.forEach { track ->
-                assertTrue(track.streamUrl.startsWith("https://"))
-                assertNotNull(track.artworkUrl)
-                assertTrue("License must indicate public domain or open audio: ${track.license}", track.license.contains("Public Domain") || track.license.contains("Creative Commons"))
-            }
-        }
+        val (corrected2, _) = AudiusSearchEngine.smartCorrectQuery("lofi")
+        assertEquals("Chill Lo-Fi", corrected2)
+
+        val (corrected3, _) = AudiusSearchEngine.smartCorrectQuery("electro")
+        assertEquals("Electronic", corrected3)
     }
 
     @Test

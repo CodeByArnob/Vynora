@@ -14,9 +14,6 @@ if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use(localPro
 fun escapeBuildConfigString(raw: String): String =
     raw.trim().replace("\\", "\\\\").replace("\"", "\\\"")
 
-val youtubeApiKey = escapeBuildConfigString(
-    System.getenv("YOUTUBE_API_KEY") ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
-)
 val audiusApiKey = escapeBuildConfigString(
     System.getenv("AUDIUS_API_KEY") ?: localProperties.getProperty("AUDIUS_API_KEY") ?: ""
 )
@@ -25,13 +22,12 @@ android {
     namespace = "com.vynora"
     compileSdk = 36
     defaultConfig {
-        buildConfigField("String", "YOUTUBE_API_KEY", "\"$youtubeApiKey\"")
         buildConfigField("String", "AUDIUS_API_KEY", "\"$audiusApiKey\"")
         applicationId = "com.vynora"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.7.0"
+        versionCode = 8
+        versionName = "0.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {

@@ -2,7 +2,7 @@ package com.vynora.visualizer
 
 /**
  * Thread-safe global audio data bridge connecting ExoPlayer's PCM stream
- * and YouTube playback metrics directly to the visualizer subsystem.
+ * and audio streaming metrics directly to the visualizer subsystem.
  */
 object AudioDataBridge {
     @Volatile

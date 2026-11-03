@@ -13,8 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Combines three audio analysis pipelines:
  * 1. ExoPlayer real-time PCM stream (zero permissions needed, 100% reliable across Bluetooth, local, & streaming).
  * 2. Native Android Visualizer (FFT capture on supported devices when RECORD_AUDIO is granted).
- * 3. YouTube/WebView rhythm pulse engine (synchronized audio rhythm during video mode).
- * 4. Harmonic procedural wave fallback with smooth exponential decay on pause.
+ * 3. Harmonic procedural wave fallback with smooth exponential decay on pause.
  */
 class AudioVisualizerManager(private val context: Context) {
     private var visualizer: Visualizer? = null
@@ -47,7 +46,7 @@ class AudioVisualizerManager(private val context: Context) {
             latestPcmTime = System.currentTimeMillis()
         }
 
-        // Register listener for YouTube/WebView video mode rhythm pulses
+        // Register listener for rhythm pulses
         AudioDataBridge.setRhythmListener { energy, isPlaying ->
             latestRhythmEnergy = energy
             isRhythmPlaying = isPlaying
@@ -138,7 +137,7 @@ class AudioVisualizerManager(private val context: Context) {
             return
         }
 
-        // 3. Priority 3: YouTube/WebView video mode rhythm pulse or organic wave
+        // 3. Priority 3: Streaming rhythm pulse or organic wave
         _currentFrame.value = VisualizerDataProcessor.createProceduralFrame(
             elapsedMs = elapsedMs,
             isPlaying = true,

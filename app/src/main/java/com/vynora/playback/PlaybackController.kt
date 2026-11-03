@@ -216,9 +216,7 @@ class PlaybackController(context: Context) {
             trimmed.startsWith("https://audius.co/stream/romance_") ||
             trimmed.startsWith("https://audius.co/stream/punjabi_") ||
             trimmed.startsWith("https://audius.co/stream/bangla_") ||
-            trimmed.startsWith("https://audius.co/stream/lofi_") ||
-            trimmed.contains("youtube.com") ||
-            trimmed.contains("youtu.be")
+            trimmed.startsWith("https://audius.co/stream/lofi_")
         ) {
             return "https://storage.googleapis.com/exoplayer-test-media-0/play.mp3"
         }
@@ -322,6 +320,8 @@ class PlaybackController(context: Context) {
         activeError = null
         controller?.play()
     }
+
+    fun resume() = play()
 
     fun togglePlayback() {
         val player = controller ?: return

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * YouTube Music "Samples" icon (double right play chevron ▷▷),
+ * Music Discovery "Samples" icon (double right play chevron ▷▷),
  * used in both the bottom navigation bar and the playlist screen action bar.
  */
 @Composable

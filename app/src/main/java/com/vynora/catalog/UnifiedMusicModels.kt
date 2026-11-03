@@ -4,9 +4,7 @@ import com.vynora.library.AudioTrack
 
 enum class AudioSourceProvider(val displayName: String, val badgeColorHex: Long) {
     AUDIUS("Audius Stream", 0xFFCC3399),
-    LOCAL_DEVICE("Device Storage", 0xFF1DB954),
-    ARCHIVE_ORG("Archive.org Open Audio", 0xFFE67E22),
-    YOUTUBE_VIDEO("YouTube Video", 0xFFFF0000)
+    LOCAL_DEVICE("Device Storage", 0xFF1DB954)
 }
 
 data class UnifiedTrack(
@@ -20,8 +18,7 @@ data class UnifiedTrack(
     val provider: AudioSourceProvider = AudioSourceProvider.AUDIUS,
     val genre: String = "Music",
     val releaseYear: String? = null,
-    val license: String = "Public / Streamable",
-    val optionalYouTubeVideoId: String? = null
+    val license: String = "Audius Streamable / Local Audio"
 ) {
     val durationLabel: String
         get() {
@@ -60,7 +57,7 @@ data class AlbumModel(
     val provider: AudioSourceProvider = AudioSourceProvider.AUDIUS,
     val description: String = "",
     val tracks: List<UnifiedTrack> = emptyList(),
-    val curator: String = "Vynora Curated"
+    val curator: String = "Audius Curated"
 ) {
     val trackCountLabel: String
         get() = "${tracks.size} tracks"

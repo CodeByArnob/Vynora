@@ -1,18 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../data/youtube_trending_service.dart';
-import '../domain/trending_video.dart';
+import '../data/audius_trending_service.dart';
+import '../domain/audius_trending_track.dart';
 
-final trendingServiceProvider = Provider<YouTubeTrendingService>((ref) {
-  final service = YouTubeTrendingService();
+final trendingServiceProvider = Provider<AudiusTrendingService>((ref) {
+  final service = AudiusTrendingService();
   ref.onDispose(service.close);
   return service;
 });
 
-final trendingMusicProvider = FutureProvider<List<TrendingVideo>>(
+final trendingMusicProvider = FutureProvider<List<AudiusTrendingTrack>>(
   (ref) => ref.watch(trendingServiceProvider).fetchTrendingMusic(),
 );
 
@@ -37,7 +36,7 @@ class DiscoverScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
             Text(
-              'GOOD MUSIC,\\nGOOD MOOD.',
+              'GOOD MUSIC,\nGOOD MOOD.',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w900,
                 height: 1.04,
@@ -46,7 +45,7 @@ class DiscoverScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Discover what listeners are playing right now.',
+              'Discover decentralized music streaming with Audius.',
               style: TextStyle(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
@@ -54,7 +53,7 @@ class DiscoverScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Trending music',
+                    'Trending on Audius',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -62,7 +61,7 @@ class DiscoverScreen extends ConsumerWidget {
                 ),
                 const Chip(
                   avatar: Icon(Icons.public, size: 16),
-                  label: Text('Bangladesh'),
+                  label: Text('Global'),
                 ),
               ],
             ),
@@ -105,21 +104,20 @@ class DiscoverScreen extends ConsumerWidget {
                             child: Padding(
                               padding: EdgeInsets.all(24),
                               child: Text(
-                                'No chart results available for this region.',
+                                'No chart results available at this time.',
                               ),
                             ),
                           )
                           : Column(
                             children: [
                               for (var i = 0; i < items.length; i++)
-                                _TrendingTile(rank: i + 1, video: items[i]),
+                                _TrendingTile(rank: i + 1, track: items[i]),
                             ],
                           ),
             ),
             const SizedBox(height: 16),
             Text(
-              'YouTube provides chart metadata and thumbnails. Playback opens '
-              'in YouTube; Vynora does not extract YouTube audio.',
+              'Audius provides online music streaming via its decentralized API.',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
@@ -132,27 +130,27 @@ class DiscoverScreen extends ConsumerWidget {
 }
 
 class _TrendingTile extends StatelessWidget {
-  const _TrendingTile({required this.rank, required this.video});
+  const _TrendingTile({required this.rank, required this.track});
 
   final int rank;
-  final TrendingVideo video;
+  final AudiusTrendingTrack track;
 
   @override
   Widget build(BuildContext context) => ListTile(
     contentPadding: const EdgeInsets.symmetric(vertical: 5),
     leading: SizedBox(
-      width: 104,
+      width: 66,
       height: 66,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child:
-            video.thumbnailUrl.isEmpty
+            track.thumbnailUrl.isEmpty
                 ? const ColoredBox(
                   color: Colors.black12,
                   child: Icon(Icons.music_note),
                 )
                 : CachedNetworkImage(
-                  imageUrl: video.thumbnailUrl,
+                  imageUrl: track.thumbnailUrl,
                   fit: BoxFit.cover,
                   errorWidget:
                       (_, __, ___) => const ColoredBox(
@@ -170,24 +168,19 @@ class _TrendingTile extends StatelessWidget {
       ),
     ),
     title: Text(
-      video.title,
+      track.title,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(fontWeight: FontWeight.w700),
     ),
     subtitle: Text(
-      '#$rank · ${video.channelTitle}',
+      '#$rank · ${track.artist} · ${track.genre}',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     ),
-    trailing: IconButton(
-      tooltip: 'Open on YouTube',
-      icon: const Icon(Icons.play_circle_outline_rounded),
-      onPressed:
-          () async => launchUrl(
-            Uri.parse(video.youtubeUrl),
-            mode: LaunchMode.externalApplication,
-          ),
+    trailing: const Icon(
+      Icons.play_circle_outline_rounded,
+      color: Color(0xFF1DB954),
     ),
   );
 }

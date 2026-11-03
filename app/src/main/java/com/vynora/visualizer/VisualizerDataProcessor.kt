@@ -189,7 +189,7 @@ object VisualizerDataProcessor {
     }
 
     /**
-     * Fluid fallback engine for paused states, stream transitions, or YouTube video mode.
+     * Fluid fallback engine for paused states, stream transitions, or procedural rhythm mode.
      */
     fun createProceduralFrame(
         elapsedMs: Long,

@@ -62,7 +62,7 @@ data class PlaylistUiModel(
     val description: String,
     val coverUri: String,
     val tracks: List<AudioTrack>,
-    val curator: String = "YouTube Music",
+    val curator: String = "Audius Music",
     val providerLabel: String = "Verified Stream",
     val unifiedTracks: List<com.vynora.catalog.UnifiedTrack> = emptyList()
 )

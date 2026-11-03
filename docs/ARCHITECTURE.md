@@ -31,7 +31,7 @@ app/src/main/
 
 ## Product boundaries
 
-Vynora plays local audio that Android exposes through MediaStore. YouTube discovery metadata, if enabled in a future build, must remain separate from playback. The app must not extract or download YouTube audio.
+Vynora streams online music exclusively from Audius and plays local device audio exposed through MediaStore. The application does not rely on third-party video platforms.
 
 PixelPlayer is a feature and UX reference only. Do not copy proprietary code, artwork or branding.
 
