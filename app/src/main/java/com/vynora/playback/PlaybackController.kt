@@ -2,7 +2,7 @@ package com.vynora.playback
 
 import android.content.ComponentName
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.getValue
@@ -93,7 +93,7 @@ class PlaybackController(context: Context) {
         val items = tracks.map { track ->
             MediaItem.Builder()
                 .setMediaId(track.uri)
-                .setUri(Uri.parse(track.uri))
+                .setUri(track.uri.toUri())
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(track.title)
