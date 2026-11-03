@@ -26,12 +26,13 @@ class TrendingVideo {
     final snippet = json['snippet'] as Map<String, dynamic>? ?? const {};
     final stats = json['statistics'] as Map<String, dynamic>? ?? const {};
     final thumbs = snippet['thumbnails'] as Map<String, dynamic>? ?? const {};
-    final thumb = (thumbs['maxres'] ??
-            thumbs['standard'] ??
-            thumbs['high'] ??
-            thumbs['medium'] ??
-            thumbs['default'])
-        as Map<String, dynamic>? ??
+    final thumb =
+        (thumbs['maxres'] ??
+                thumbs['standard'] ??
+                thumbs['high'] ??
+                thumbs['medium'] ??
+                thumbs['default'])
+            as Map<String, dynamic>? ??
         const {};
 
     return TrendingVideo(
@@ -39,9 +40,7 @@ class TrendingVideo {
       title: snippet['title']?.toString() ?? 'Untitled',
       channelTitle: snippet['channelTitle']?.toString() ?? 'Unknown artist',
       thumbnailUrl: thumb['url']?.toString() ?? '',
-      publishedAt: DateTime.tryParse(
-        snippet['publishedAt']?.toString() ?? '',
-      ),
+      publishedAt: DateTime.tryParse(snippet['publishedAt']?.toString() ?? ''),
       viewCount: int.tryParse(stats['viewCount']?.toString() ?? ''),
       categoryId: snippet['categoryId']?.toString() ?? '',
     );
