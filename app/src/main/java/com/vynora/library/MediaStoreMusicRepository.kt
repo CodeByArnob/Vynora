@@ -18,7 +18,9 @@ class MediaStoreMusicRepository(private val context: Context) {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.ARTIST_ID,
             MediaStore.Audio.Media.DATE_ADDED,
-        )
+        ) + if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            arrayOf(MediaStore.Audio.Media.RELATIVE_PATH)
+        } else emptyArray()
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
         val tracks = mutableListOf<AudioTrack>()
 
@@ -37,6 +39,7 @@ class MediaStoreMusicRepository(private val context: Context) {
             val albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val artistIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID)
             val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
+            val relativePathColumn = cursor.getColumnIndex(MediaStore.Audio.Media.RELATIVE_PATH)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
@@ -53,7 +56,7 @@ class MediaStoreMusicRepository(private val context: Context) {
                     albumId = cursor.getLong(albumIdColumn),
                     artistId = cursor.getLong(artistIdColumn),
                     dateAddedSeconds = cursor.getLong(dateAddedColumn),
-                    relativePath = null,
+                    relativePath = relativePathColumn.takeIf { it >= 0 }?.let { cursor.getString(it) },
                     isFavorite = false
                 )
             }
