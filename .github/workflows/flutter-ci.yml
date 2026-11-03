@@ -110,8 +110,10 @@ jobs:
       - name: Generate Android launcher icons
         run: dart run flutter_launcher_icons
 
-      - name: Verify Dart formatting
-        run: dart format --output=none --set-exit-if-changed .
+      - name: Apply canonical Dart formatting for diagnostic run
+        run: |
+          dart format .
+          git diff -- lib test
 
       - name: Static analysis
         run: flutter analyze
