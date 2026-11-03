@@ -120,8 +120,7 @@ class _MiniPlayer extends ConsumerWidget {
                     final isPlaying = snapshot.data?.playing ?? player.playing;
                     return IconButton(
                       tooltip: isPlaying ? 'Pause' : 'Play',
-                      onPressed:
-                          isPlaying ? player.pause : () => player.play(),
+                      onPressed: isPlaying ? player.pause : () => player.play(),
                       icon: Icon(
                         isPlaying
                             ? Icons.pause_rounded
