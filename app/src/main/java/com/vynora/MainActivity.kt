@@ -381,7 +381,7 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
         Box(
             Modifier.size(92.dp).clip(CircleShape).background(Color(0xFF211B32)),
             contentAlignment = Alignment.Center
-        ) { Icon(Icons.Rounded.QueueMusic, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color(0xFFC8B8FF)) }
+        ) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = null, modifier = Modifier.size(42.dp), tint = Color(0xFFC8B8FF)) }
         Spacer(Modifier.height(20.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
@@ -533,7 +533,7 @@ private fun PlaylistsScreen(
                             color = MaterialTheme.colorScheme.surfaceVariant
                         ) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Text(playlist.name, modifier = Modifier.weight(1f).padding(start = 12.dp), fontWeight = FontWeight.SemiBold)
                                 Text("Open", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
