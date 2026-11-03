@@ -13,7 +13,7 @@ class YouTubeApiException implements Exception {
   String toString() => message;
 }
 
-/// Retrieves YouTube chart metadata only; never extracts media streams.
+/// Retrieves YouTube Music-category metadata and artwork only.
 class YouTubeTrendingService {
   YouTubeTrendingService({http.Client? client, String? apiKey})
       : _client = client ?? http.Client(),
@@ -40,7 +40,7 @@ class YouTubeTrendingService {
     }
 
     final uri = Uri.https('www.googleapis.com', '/youtube/v3/videos', {
-      'part': 'snippet,statistics,contentDetails',
+      'part': 'snippet,statistics',
       'chart': 'mostPopular',
       'regionCode': normalizedRegion,
       'videoCategoryId': '10',
@@ -86,7 +86,10 @@ class YouTubeTrendingService {
     return rawItems
         .whereType<Map<String, dynamic>>()
         .map(TrendingVideo.fromJson)
-        .where((video) => video.id.isNotEmpty)
+        .where((track) =>
+            track.id.isNotEmpty &&
+            track.isMusic &&
+            track.thumbnailUrl.isNotEmpty)
         .toList(growable: false);
   }
 
