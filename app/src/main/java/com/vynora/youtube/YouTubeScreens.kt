@@ -201,6 +201,17 @@ private fun YouTubeResultRow(item: YouTubeItem, onClick: () -> Unit) {
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val playerWebView = remember { mutableStateOf<WebView?>(null) }
+    DisposableEffect(playerWebView.value) {
+        onDispose {
+            playerWebView.value?.apply {
+                stopLoading()
+                webChromeClient = null
+                destroy()
+            }
+            playerWebView.value = null
+        }
+    }
     Column(modifier.fillMaxSize()) {
         TextButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) { Text("← Back to Discover") }
         Box(Modifier.fillMaxWidth().height(240.dp).background(Color.Black), contentAlignment = Alignment.Center) {
@@ -208,6 +219,7 @@ fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier
                 modifier = Modifier.fillMaxSize(),
                 factory = { context ->
                     WebView(context).apply {
+                        playerWebView.value = this
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = true
