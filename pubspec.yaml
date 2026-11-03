@@ -1,5 +1,5 @@
 name: vynora
-description: An open-source Material 3 music discovery and local music player.
+description: A Flutter music discovery app and local audio player.
 publish_to: "none"
 version: 0.1.0+1
 environment:
@@ -13,6 +13,12 @@ dependencies:
   cached_network_image: ^3.4.1
   google_fonts: ^6.2.1
   url_launcher: ^6.3.1
+  file_picker: ^11.0.3
+  just_audio: ^0.10.6
+  just_audio_background: ^0.0.1-beta.17
+  audio_service: ^0.18.19
+  path: ^1.9.1
+  path_provider: ^2.1.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
