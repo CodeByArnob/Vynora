@@ -27,6 +27,9 @@ interface TrackDao {
     @Query("UPDATE tracks SET isFavorite = :favorite WHERE uri = :uri")
     suspend fun setFavorite(uri: String, favorite: Boolean)
 
+    @Query("SELECT uri FROM tracks WHERE isFavorite = 1")
+    suspend fun getFavoriteUris(): List<String>
+
     @Query("SELECT COUNT(*) FROM tracks")
     fun observeCount(): Flow<Int>
 }

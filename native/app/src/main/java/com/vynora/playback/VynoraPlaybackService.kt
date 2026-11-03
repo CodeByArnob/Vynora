@@ -28,6 +28,11 @@ class VynoraPlaybackService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
+    override fun onTaskRemoved(rootIntent: android.content.Intent?) {
+        if (mediaSession?.player?.isPlaying != true) stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         mediaSession?.run {
             player.release()

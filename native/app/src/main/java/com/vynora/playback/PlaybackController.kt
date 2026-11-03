@@ -2,6 +2,9 @@ package com.vynora.playback
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,49 +24,76 @@ data class PlaybackSnapshot(
     val artist: String = "Choose a song from your library",
     val isPlaying: Boolean = false,
     val positionMs: Long = 0L,
-    val durationMs: Long = 0L
+    val durationMs: Long = 0L,
+    val shuffleEnabled: Boolean = false,
+    val repeatMode: Int = Player.REPEAT_MODE_OFF
 )
 
 @UnstableApi
 class PlaybackController(context: Context) {
     var snapshot by mutableStateOf(PlaybackSnapshot())
         private set
+
     private var controller: MediaController? = null
     private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var pendingQueue: Pair<List<AudioTrack>, Int>? = null
     private val appContext = context.applicationContext
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private val progressTicker = object : Runnable {
+        override fun run() {
+            refreshSnapshot()
+            mainHandler.postDelayed(this, 500L)
+        }
+    }
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) = refreshSnapshot()
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshSnapshot()
         override fun onPlaybackStateChanged(playbackState: Int) = refreshSnapshot()
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = refreshSnapshot()
+        override fun onRepeatModeChanged(repeatMode: Int) = refreshSnapshot()
     }
 
     init {
-        val token = SessionToken(
-            appContext,
-            ComponentName(appContext, VynoraPlaybackService::class.java)
-        )
+        val token = SessionToken(appContext, ComponentName(appContext, VynoraPlaybackService::class.java))
         controllerFuture = MediaController.Builder(appContext, token).buildAsync().also { future ->
             future.addListener({
                 try {
                     controller = future.get().also { it.addListener(listener) }
                     refreshSnapshot()
+                    pendingQueue?.let { (tracks, index) ->
+                        pendingQueue = null
+                        startQueue(tracks, index)
+                    }
                 } catch (_: ExecutionException) {
-                    snapshot = PlaybackSnapshot(title = "Player unavailable", artist = "Restart the app and try again")
+                    snapshot = PlaybackSnapshot(
+                        title = "Player unavailable",
+                        artist = "Restart the app and try again"
+                    )
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
                 }
             }, ContextCompat.getMainExecutor(appContext))
         }
+        mainHandler.post(progressTicker)
     }
 
     fun playQueue(tracks: List<AudioTrack>, startIndex: Int) {
-        val player = controller ?: return
         if (tracks.isEmpty() || startIndex !in tracks.indices) return
+        if (controller == null) {
+            pendingQueue = tracks to startIndex
+            return
+        }
+        startQueue(tracks, startIndex)
+    }
+
+    private fun startQueue(tracks: List<AudioTrack>, startIndex: Int) {
+        val player = controller ?: return
         val items = tracks.map { track ->
             MediaItem.Builder()
-                .setMediaId(track.id.toString())
-                .setUri(track.uri)
+                .setMediaId(track.uri)
+                .setUri(Uri.parse(track.uri))
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(track.title)
@@ -83,11 +113,23 @@ class PlaybackController(context: Context) {
     }
 
     fun skipNext() { controller?.seekToNextMediaItem() }
-
     fun skipPrevious() { controller?.seekToPreviousMediaItem() }
+    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs.coerceAtLeast(0L)) }
 
-    fun seekTo(positionMs: Long) {
-        controller?.seekTo(positionMs.coerceAtLeast(0L))
+    fun toggleShuffle() {
+        controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
+        refreshSnapshot()
+    }
+
+    fun cycleRepeatMode() {
+        controller?.let {
+            it.repeatMode = when (it.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+        }
+        refreshSnapshot()
     }
 
     private fun refreshSnapshot() {
@@ -98,11 +140,14 @@ class PlaybackController(context: Context) {
             artist = metadata.artist?.toString() ?: "Unknown artist",
             isPlaying = player.isPlaying,
             positionMs = player.currentPosition.coerceAtLeast(0L),
-            durationMs = player.duration.takeIf { it > 0L } ?: 0L
+            durationMs = player.duration.takeIf { it > 0L } ?: 0L,
+            shuffleEnabled = player.shuffleModeEnabled,
+            repeatMode = player.repeatMode
         )
     }
 
     fun release() {
+        mainHandler.removeCallbacks(progressTicker)
         controller?.removeListener(listener)
         controller = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
