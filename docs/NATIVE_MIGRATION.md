@@ -1,24 +1,29 @@
-# Vynora Native Migration Plan
+# Vynora Native Migration
 
-## Decision
-The target application is native Android: Kotlin, Jetpack Compose and Material 3. The Flutter source is retained unchanged during migration and is not the long-term Android implementation.
+## Target stack
+- Kotlin + Jetpack Compose + Material 3
+- Android Gradle Plugin 9.1.1, Gradle 9.3.1, JDK 17
+- Compose BOM 2026.09.00 (API 37)
+- Media3 1.11.1 (ExoPlayer + MediaSessionService)
+- Room 2.8.5 with KSP
 
-## Architecture
-- **Presentation:** Compose screens, Material 3 design system, lifecycle-aware state.
-- **Domain:** track, album, artist, playlist and playback models; use-case boundaries.
-- **Data:** MediaStore index, Room persistence, DataStore preferences and artwork/lyrics repositories.
-- **Playback:** Media3 ExoPlayer hosted by MediaSessionService; MediaController exposed to UI.
-- **Platform:** scoped media permissions, audio focus, noisy-route handling, notification and Android Auto integration.
+## Implemented foundation
+- Dedicated native Android application under `native/`; Flutter code is preserved until native parity and release checks are complete.
+- Runtime READ_MEDIA_AUDIO permission and MediaStore scanning on Dispatchers.IO.
+- Room-backed song index, favorite state and playlist/playlist-track schema.
+- Compose library/search/now-playing screens.
+- Media3 ExoPlayer service, MediaSession, audio focus and noisy-route pause handling.
+- Queue playback, next/previous, notification and lock-screen session integration.
+- CI build, lint, unit tests, APK artifact upload and weekly dependency updates.
 
-## Delivery phases
-1. **Foundation (in progress):** native Gradle project, Compose shell, MediaStore scan, search, Media3 background service and queue playback.
-2. **Library:** Room database, album/artist/folder views, artwork extraction/cache, sorting, favorites, playlists and listening history.
-3. **Player experience:** full queue editor, shuffle/repeat, gapless playback, crossfade, seek/progress, sleep timer and robust audio focus.
-4. **Advanced:** synchronized lyrics (LRCLIB adapter with attribution and user controls), equalizer/audio effects where device APIs permit, tag editing and widgets.
-5. **Release:** accessibility, performance, permission/lifecycle/device test matrix, signed AAB, privacy policy and Play Console readiness.
+## Remaining delivery phases
+1. **Library UX:** albums, artists, folders, favorites and persistent playlist screens; artwork cache.
+2. **Player UX:** progress/seek, queue editor, shuffle/repeat, gapless, crossfade, sleep timer and playback history.
+3. **Advanced:** lyrics provider with attribution/cache, equalizer where Android audio-effect APIs permit, widgets and Android Auto.
+4. **Release:** accessibility and device test matrix, signed AAB, privacy disclosures and Play Console release.
 
 ## Guardrails
-- Do not copy PixelPlayer proprietary source, branding or assets. Treat it as a feature and UX reference only.
-- No YouTube audio extraction or downloading. Discovery metadata remains separate from local playback.
-- Never request broad storage access when MediaStore's granular audio permission is sufficient.
-- No feature is marked complete until code, automated tests and device-level behavior are verified.
+- Do not copy proprietary PixelPlayer source, trademarks or artwork.
+- Do not extract or download YouTube audio; discovery metadata remains separate from local playback.
+- Request only granular media permissions.
+- No feature is complete without automated and device-level verification.
