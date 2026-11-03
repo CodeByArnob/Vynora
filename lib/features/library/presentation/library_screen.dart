@@ -24,7 +24,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     setState(() => _isImporting = true);
 
     try {
-      final tracks = await ref.read(localMusicRepositoryProvider).importTracks();
+      final tracks =
+          await ref.read(localMusicRepositoryProvider).importTracks();
       ref.invalidate(localTracksProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,9 +39,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not import music: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not import music: $error')));
     } finally {
       if (mounted) setState(() => _isImporting = false);
     }
@@ -48,19 +49,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   Future<void> _playTrack(List<LocalTrack> tracks, int index) async {
     final player = ref.read(audioPlayerProvider);
-    final sources =
-        tracks
-            .map(
-              (track) => AudioSource.file(
-                track.path,
-                tag: MediaItem(
-                  id: track.path,
-                  title: track.title,
-                  album: 'On-device music',
-                ),
-              ),
-            )
-            .toList(growable: false);
+    final sources = tracks
+        .map(
+          (track) => AudioSource.file(
+            track.path,
+            tag: MediaItem(
+              id: track.path,
+              title: track.title,
+              album: 'On-device music',
+            ),
+          ),
+        )
+        .toList(growable: false);
 
     try {
       await player.setAudioSources(
@@ -187,8 +187,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
                         itemCount: items.length,
-                        separatorBuilder:
-                            (_, _) => const SizedBox(height: 6),
+                        separatorBuilder: (_, _) => const SizedBox(height: 6),
                         itemBuilder: (context, index) {
                           final track = items[index];
                           return Card(
@@ -264,9 +263,9 @@ class _LibraryMessage extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
