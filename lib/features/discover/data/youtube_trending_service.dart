@@ -1,10 +1,14 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../domain/trending_video.dart';
 
 class YouTubeApiException implements Exception {
   const YouTubeApiException(this.message);
+
   final String message;
+
   @override
   String toString() => message;
 }
@@ -27,29 +31,59 @@ class YouTubeTrendingService {
         'Configure YOUTUBE_API_KEY at build time to load YouTube charts.',
       );
     }
+
+    final normalizedRegion = regionCode.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(normalizedRegion)) {
+      throw const YouTubeApiException(
+        'Region code must be a valid two-letter country code.',
+      );
+    }
+
     final uri = Uri.https('www.googleapis.com', '/youtube/v3/videos', {
       'part': 'snippet,statistics,contentDetails',
       'chart': 'mostPopular',
-      'regionCode': regionCode.toUpperCase(),
+      'regionCode': normalizedRegion,
       'videoCategoryId': '10',
       'maxResults': maxResults.clamp(1, 50).toString(),
       'key': _apiKey,
     });
-    final response = await _client.get(uri).timeout(
-      const Duration(seconds: 15),
-    );
+
+    final response = await _client
+        .get(uri)
+        .timeout(const Duration(seconds: 15));
+
     if (response.statusCode != 200) {
-      final body = jsonDecode(response.body);
-      final message = body is Map<String, dynamic>
-          ? body['error']?['message']?.toString()
-          : null;
+      String? message;
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map<String, dynamic>) {
+          final error = body['error'];
+          if (error is Map<String, dynamic>) {
+            message = error['message']?.toString();
+          }
+        }
+      } on FormatException {
+        // Fall back to the HTTP status when the API response is not JSON.
+      }
+
       throw YouTubeApiException(
         message ?? 'YouTube API error: HTTP ${response.statusCode}',
       );
     }
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final items = body['items'] as List<dynamic>? ?? const [];
-    return items
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const YouTubeApiException(
+        'YouTube API returned an unexpected response format.',
+      );
+    }
+
+    final rawItems = decoded['items'];
+    if (rawItems is! List) {
+      return const [];
+    }
+
+    return rawItems
         .whereType<Map<String, dynamic>>()
         .map(TrendingVideo.fromJson)
         .where((video) => video.id.isNotEmpty)
