@@ -31,13 +31,17 @@ class TrendingVideo {
             thumbs['high'] ??
             thumbs['medium'] ??
             thumbs['default'])
-        as Map<String, dynamic>? ?? const {};
+        as Map<String, dynamic>? ??
+        const {};
+
     return TrendingVideo(
       id: json['id']?.toString() ?? '',
       title: snippet['title']?.toString() ?? 'Untitled',
       channelTitle: snippet['channelTitle']?.toString() ?? 'Unknown artist',
       thumbnailUrl: thumb['url']?.toString() ?? '',
-      publishedAt: DateTime.tryParse(snippet['publishedAt']?.toString() ?? ''),
+      publishedAt: DateTime.tryParse(
+        snippet['publishedAt']?.toString() ?? '',
+      ),
       viewCount: int.tryParse(stats['viewCount']?.toString() ?? ''),
       categoryId: snippet['categoryId']?.toString() ?? '',
     );
