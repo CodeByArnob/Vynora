@@ -30,7 +30,9 @@ class LocalMusicRepository {
 
     await for (final entity in directory.list(followLinks: false)) {
       if (entity is! File) continue;
-      if (!_supportedExtensions.contains(p.extension(entity.path).toLowerCase())) {
+      if (!_supportedExtensions.contains(
+        p.extension(entity.path).toLowerCase(),
+      )) {
         continue;
       }
       tracks.add(LocalTrack(path: entity.path));
@@ -43,7 +45,7 @@ class LocalMusicRepository {
   }
 
   Future<List<LocalTrack>> importTracks() async {
-    final selection = await FilePicker.platform.pickFiles(
+    final selection = await FilePicker.pickFiles(
       type: FileType.audio,
       allowMultiple: true,
       withData: false,
@@ -75,7 +77,9 @@ class LocalMusicRepository {
     final target = p.normalize(track.path);
 
     if (!p.isWithin(root, target)) {
-      throw FileSystemException('Refusing to delete a file outside Vynora music storage.');
+      throw const FileSystemException(
+        'Refusing to delete a file outside Vynora music storage.',
+      );
     }
 
     final file = File(target);
