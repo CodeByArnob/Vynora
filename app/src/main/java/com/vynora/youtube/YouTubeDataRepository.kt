@@ -6,29 +6,36 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class YouTubeDataRepository(private val apiKey: String) {
-    suspend fun searchVideos(query: String, preferRecent: Boolean = true): List<YouTubeItem> =
-        search(query, "video", preferRecent)
+    suspend fun searchVideos(query: String, recentWindowDays: Long = 90L): List<YouTubeItem> =
+        search(query, "video", recentWindowDays)
 
     suspend fun searchPlaylists(query: String): List<YouTubeItem> =
-        search(query, "playlist", preferRecent = false)
+        search(query, "playlist", recentWindowDays = 0L)
 
-    private suspend fun search(query: String, type: String, preferRecent: Boolean): List<YouTubeItem> =
+    private suspend fun search(query: String, type: String, recentWindowDays: Long): List<YouTubeItem> =
         withContext(Dispatchers.IO) {
             require(apiKey.isNotBlank()) {
                 "YouTube API key is not configured. Add YOUTUBE_API_KEY to local.properties or your GitHub Actions secret."
             }
-            val cleanedQuery = query.trim().ifBlank { "latest Hindi songs 2026 official music video" }
+            val cleanedQuery = query.trim().ifBlank { "latest Hindi songs T-Series Sony Music Zee Music official video" }
             val encodedQuery = URLEncoder.encode(cleanedQuery, Charsets.UTF_8.name())
-            val sort = if (type == "video" && preferRecent) "&order=date" else "&order=relevance"
-            val videoParams = if (type == "video") {
-                "&videoCategoryId=10&videoEmbeddable=true&videoSyndicated=true&safeSearch=none"
+            val publishedAfterParam = if (type == "video" && recentWindowDays > 0L) {
+                val cutoff = Instant.now().minus(recentWindowDays, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS).toString()
+                "&publishedAfter=${URLEncoder.encode(cutoff, Charsets.UTF_8.name())}"
             } else {
                 ""
             }
+            val videoParams = if (type == "video") {
+                "&order=relevance&videoCategoryId=10&videoEmbeddable=true&videoSyndicated=true&safeSearch=none$publishedAfterParam"
+            } else {
+                "&order=relevance"
+            }
             val url = URL(
-                "https://www.googleapis.com/youtube/v3/search?part=snippet&type=$type&maxResults=30&regionCode=IN&relevanceLanguage=hi&q=$encodedQuery&key=$apiKey$sort$videoParams"
+                "https://www.googleapis.com/youtube/v3/search?part=snippet&type=$type&maxResults=35&regionCode=IN&relevanceLanguage=hi&q=$encodedQuery&key=$apiKey$videoParams"
             )
             val connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
@@ -60,29 +67,36 @@ class YouTubeDataRepository(private val apiKey: String) {
                 val id = if (type == "playlist") idObject.optString("playlistId") else idObject.optString("videoId")
                 if (id.isBlank()) continue
                 val snippet = item.optJSONObject("snippet") ?: continue
-                val title = snippet.optString("title", "Untitled")
+                val rawTitle = snippet.optString("title", "Untitled")
+                val title = YouTubeMusicFilter.cleanHtmlEntities(rawTitle)
+                val channelTitle = YouTubeMusicFilter.cleanHtmlEntities(snippet.optString("channelTitle", "YouTube Music"))
                 val description = snippet.optString("description", "")
-                if (type == "video" && !YouTubeMusicFilter.isGenuineMusicResult(title, description)) continue
+                if (type == "video" && !YouTubeMusicFilter.isGenuineMusicResult(title, description, channelTitle)) continue
                 val publishedAt = snippet.optString("publishedAt", "")
                 val thumbnails = snippet.optJSONObject("thumbnails")
                 val thumbnail = thumbnails?.optJSONObject("high")?.optString("url")
                     ?: thumbnails?.optJSONObject("medium")?.optString("url")
                     ?: thumbnails?.optJSONObject("default")?.optString("url")
                     ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+                val official = YouTubeMusicFilter.isOfficialMusicChannel(channelTitle, title)
                 add(
                     YouTubeItem(
                         id = id,
                         title = title,
-                        channelTitle = snippet.optString("channelTitle", "YouTube Music"),
+                        channelTitle = channelTitle,
                         thumbnailUrl = thumbnail,
                         description = description,
                         isPlaylist = type == "playlist",
                         publishedAt = publishedAt,
-                        releaseYear = YouTubeMusicFilter.extractReleaseYear(title, description, publishedAt)
+                        releaseYear = YouTubeMusicFilter.extractReleaseYear(title, description, publishedAt),
+                        isOfficialChannel = official
                     )
                 )
             }
         }
-        return parsed.sortedByDescending { it.publishedAt }
+        return parsed.sortedWith(
+            compareByDescending<YouTubeItem> { it.isOfficialChannel }
+                .thenByDescending { it.publishedAt }
+        )
     }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.vynora.BuildConfig
 import com.vynora.audius.AudiusRepository
 import com.vynora.audius.AudiusTrack
+import com.vynora.library.AudioTrack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +24,7 @@ data class YouTubeHomeState(
     val error: String? = null,
     val audiusError: String? = null,
     val apiKeyConfigured: Boolean = BuildConfig.YOUTUBE_API_KEY.isNotBlank(),
-    val activeQuery: String = "latest Hindi songs 2026 official video"
+    val activeQuery: String = "latest Hindi songs T-Series Sony Music Zee Music official"
 )
 
 class YouTubeViewModel(application: Application) : AndroidViewModel(application) {
@@ -31,6 +32,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
     private val audiusRepository = AudiusRepository(BuildConfig.AUDIUS_API_KEY)
     private val _state = MutableStateFlow(YouTubeHomeState())
     val state: StateFlow<YouTubeHomeState> = _state.asStateFlow()
+
     private var hasLoaded = false
 
     fun loadHome() {
@@ -41,7 +43,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun searchVideos(query: String) {
-        val normalized = query.trim().ifBlank { "latest Hindi songs 2026 official video" }
+        val normalized = query.trim().ifBlank { "latest Hindi songs T-Series Sony Music Zee Music official" }
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null, activeQuery = normalized)
             try {
@@ -59,7 +61,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun searchPlaylists(query: String) {
-        val normalized = query.trim().ifBlank { "Hindi Bollywood music playlists" }
+        val normalized = query.trim().ifBlank { "Hindi Bollywood official music playlists" }
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null, activeQuery = normalized)
             try {
@@ -99,7 +101,11 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
             _state.value = _state.value.copy(isAudiusLoading = true, audiusError = null)
             try {
                 val tracks = audiusRepository.searchTracks(normalized, limit = 24)
-                _state.value = _state.value.copy(audiusTracks = tracks, isAudiusLoading = false)
+                if (tracks.isNotEmpty()) {
+                    _state.value = _state.value.copy(audiusTracks = tracks, isAudiusLoading = false)
+                } else {
+                    loadAudiusTrending()
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -107,6 +113,42 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
                     isAudiusLoading = false,
                     audiusError = error.message ?: "Unable to search Audius tracks."
                 )
+            }
+        }
+    }
+
+    fun resolveFallbackAudioQueue(item: YouTubeItem, onReady: (List<AudioTrack>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val cleanQuery = item.title
+                    .replace(Regex("\\(.*?\\)|\\[.*?\\]"), " ")
+                    .split("|", "-", "–")
+                    .firstOrNull()
+                    ?.trim()
+                    ?.takeIf { it.length >= 3 }
+                    ?: item.title
+                val matched = audiusRepository.searchTracks(cleanQuery, limit = 12)
+                val sourceList = if (matched.isNotEmpty()) matched else _state.value.audiusTracks
+                if (sourceList.isNotEmpty()) {
+                    val queue = sourceList.mapIndexed { idx, track ->
+                        val base = track.toAudioTrack(audiusStreamUrl(track.id))
+                        if (idx == 0) {
+                            base.copy(
+                                title = item.title,
+                                artist = item.channelTitle,
+                                artworkUri = item.thumbnailUrl.ifBlank { base.artworkUri }
+                            )
+                        } else {
+                            base
+                        }
+                    }
+                    onReady(queue)
+                }
+            } catch (_: Exception) {
+                val fallback = _state.value.audiusTracks
+                if (fallback.isNotEmpty()) {
+                    onReady(fallback.map { it.toAudioTrack(audiusStreamUrl(it.id)) })
+                }
             }
         }
     }

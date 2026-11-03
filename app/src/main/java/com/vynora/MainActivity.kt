@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -58,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -151,59 +153,106 @@ private fun VynoraApp(
         if (hasPermission) libraryViewModel.refreshLibrary()
     }
 
+    val startAudiusFallbackPlayback: () -> Unit = {
+        val currentYt = selectedYouTubeItem
+        if (currentYt != null) {
+            youTubeViewModel.resolveFallbackAudioQueue(currentYt) { queue ->
+                playbackController.playQueue(queue, 0)
+            }
+        } else {
+            val audiusList = youTubeState.audiusTracks
+            if (audiusList.isNotEmpty()) {
+                val streamQueue = audiusList.map {
+                    it.toAudioTrack(youTubeViewModel.audiusStreamUrl(it.id))
+                }
+                playbackController.playQueue(streamQueue, 0)
+            } else if (tracks.isNotEmpty()) {
+                playbackController.playQueue(tracks, 0)
+            }
+        }
+    }
+
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Color(0xFF1DB954),
             onPrimary = Color(0xFF062010),
             secondary = Color(0xFF38BDF8),
-            background = Color(0xFF0A0D12),
-            surface = Color(0xFF121722),
-            surfaceVariant = Color(0xFF1B2232)
+            background = Color(0xFF07090E),
+            surface = Color(0xFF111622),
+            surfaceVariant = Color(0xFF182030)
         )
     ) {
         Scaffold(
-            containerColor = Color(0xFF0A0D12),
+            containerColor = Color(0xFF07090E),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text("VYNORA", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge)
-                            Text(
-                                "Indian Music · YouTube · Audius · Offline Library",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                if (selectedTab != 5) {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color(0xFF07090E)
+                        ),
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    modifier = Modifier.size(34.dp),
+                                    shape = CircleShape,
+                                    color = Color(0xFF13281E)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Rounded.GraphicEq,
+                                            contentDescription = null,
+                                            tint = Color(0xFF1DB954),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    "Vynora",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = {
+                                youTubeViewModel.searchVideos(youTubeState.activeQuery)
+                                youTubeViewModel.loadAudiusTrending()
+                                if (hasPermission) libraryViewModel.refreshLibrary()
+                            }) {
+                                Icon(
+                                    Icons.Rounded.Refresh,
+                                    contentDescription = "Refresh music",
+                                    tint = Color(0xFFCBD5E1)
+                                )
+                            }
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = {
-                            if (hasPermission) libraryViewModel.refreshLibrary()
-                            else permissionLauncher.launch(permission)
-                        }) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Rescan music")
-                        }
-                    }
-                )
+                    )
+                }
             },
             bottomBar = {
                 Column {
-                    if (selectedTab != 4 && snapshot.title != "Nothing playing" && snapshot.title != "Player unavailable") {
+                    if (selectedTab != 4 && selectedTab != 5 &&
+                        snapshot.title != "Nothing playing" &&
+                        snapshot.title != "Player unavailable"
+                    ) {
                         MiniPlayer(snapshot, playbackController, onOpen = { selectedTab = 4 })
                     }
-                    NavigationBar(containerColor = Color(0xFF121722)) {
+                    NavigationBar(containerColor = Color(0xFF0D121C)) {
                         val tabs = listOf(
                             "Home" to Icons.Rounded.Home,
                             "Library" to Icons.Rounded.LibraryMusic,
                             "Favorites" to Icons.Rounded.Favorite,
                             "Playlists" to Icons.Rounded.QueueMusic,
-                            "Now Playing" to Icons.Rounded.GraphicEq
+                            "Playing" to Icons.Rounded.GraphicEq
                         )
                         tabs.forEachIndexed { index, pair ->
                             NavigationBarItem(
-                                selected = selectedTab == index,
+                                selected = selectedTab == index || (selectedTab == 5 && index == 4),
                                 onClick = { selectedTab = index },
                                 icon = { Icon(pair.second, contentDescription = null) },
-                                label = { Text(pair.first) }
+                                label = { Text(pair.first, maxLines = 1) }
                             )
                         }
                     }
@@ -226,6 +275,7 @@ private fun VynoraApp(
                             it.toAudioTrack(youTubeViewModel.audiusStreamUrl(it.id))
                         }
                         val index = youTubeState.audiusTracks.indexOfFirst { it.id == audiusTrack.id }.coerceAtLeast(0)
+                        selectedYouTubeItem = null
                         playbackController.playQueue(streamQueue, index)
                         selectedTab = 4
                     },
@@ -242,16 +292,16 @@ private fun VynoraApp(
                     hasPermission = hasPermission,
                     scanError = scanError,
                     onGrantPermission = { permissionLauncher.launch(permission) },
-                    onPlay = { index -> playbackController.playQueue(tracks, index) },
+                    onPlay = { index -> selectedYouTubeItem = null; playbackController.playQueue(tracks, index) },
                     onRescan = libraryViewModel::refreshLibrary,
                     onFavorite = libraryViewModel::setFavorite
                 )
                 2 -> TrackCollectionScreen(
                     modifier = Modifier.padding(padding),
-                    title = "Your favorites",
-                    subtitle = "${favorites.size} saved local songs · ${youTubeState.favoriteVideoIds.size} saved videos",
+                    title = "Favorites",
+                    subtitle = "${favorites.size} local songs · ${youTubeState.favoriteVideoIds.size} saved videos",
                     tracks = favorites,
-                    onPlay = { index -> playbackController.playQueue(favorites, index) },
+                    onPlay = { index -> selectedYouTubeItem = null; playbackController.playQueue(favorites, index) },
                     onFavorite = { track -> libraryViewModel.setFavorite(track, false) }
                 )
                 3 -> PlaylistsScreen(
@@ -259,15 +309,17 @@ private fun VynoraApp(
                     libraryViewModel = libraryViewModel,
                     playbackController = playbackController
                 )
-                4 -> NowPlayingScreen(
-                    modifier = Modifier.padding(padding),
-                    snapshot = snapshot,
-                    controller = playbackController
-                )
-                else -> selectedYouTubeItem?.let { item ->
+                4 -> selectedYouTubeItem?.let { item ->
                     YouTubeWatchScreen(
                         item = item,
-                        onBack = { selectedYouTubeItem = null; selectedTab = 0 },
+                        queue = youTubeState.videos,
+                        snapshot = snapshot,
+                        controller = playbackController,
+                        onBack = { selectedTab = 0 },
+                        onSelectQueueItem = { next ->
+                            youTubeViewModel.recordPlayed(next)
+                            selectedYouTubeItem = next
+                        },
                         onSkipNext = {
                             val list = youTubeState.videos
                             if (list.isNotEmpty()) {
@@ -277,6 +329,55 @@ private fun VynoraApp(
                                 selectedYouTubeItem = nextItem
                             }
                         },
+                        onSkipPrevious = {
+                            val list = youTubeState.videos
+                            if (list.isNotEmpty()) {
+                                val prevIdx = (list.indexOfFirst { it.id == item.id } - 1 + list.size) % list.size
+                                val prevItem = list[prevIdx]
+                                youTubeViewModel.recordPlayed(prevItem)
+                                selectedYouTubeItem = prevItem
+                            }
+                        },
+                        onAutoFallbackToAudio = startAudiusFallbackPlayback,
+                        isFavorite = youTubeState.favoriteVideoIds.contains(item.id),
+                        onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(item.id) },
+                        modifier = Modifier.padding(padding)
+                    )
+                } ?: NowPlayingScreen(
+                    modifier = Modifier.padding(padding),
+                    snapshot = snapshot,
+                    controller = playbackController
+                )
+                else -> selectedYouTubeItem?.let { item ->
+                    YouTubeWatchScreen(
+                        item = item,
+                        queue = youTubeState.videos,
+                        snapshot = snapshot,
+                        controller = playbackController,
+                        onBack = { selectedTab = 0 },
+                        onSelectQueueItem = { next ->
+                            youTubeViewModel.recordPlayed(next)
+                            selectedYouTubeItem = next
+                        },
+                        onSkipNext = {
+                            val list = youTubeState.videos
+                            if (list.isNotEmpty()) {
+                                val nextIdx = (list.indexOfFirst { it.id == item.id } + 1) % list.size
+                                val nextItem = list[nextIdx]
+                                youTubeViewModel.recordPlayed(nextItem)
+                                selectedYouTubeItem = nextItem
+                            }
+                        },
+                        onSkipPrevious = {
+                            val list = youTubeState.videos
+                            if (list.isNotEmpty()) {
+                                val prevIdx = (list.indexOfFirst { it.id == item.id } - 1 + list.size) % list.size
+                                val prevItem = list[prevIdx]
+                                youTubeViewModel.recordPlayed(prevItem)
+                                selectedYouTubeItem = prevItem
+                            }
+                        },
+                        onAutoFallbackToAudio = startAudiusFallbackPlayback,
                         isFavorite = youTubeState.favoriteVideoIds.contains(item.id),
                         onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(item.id) },
                         modifier = Modifier.padding(padding)
@@ -477,35 +578,59 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
 
 @Composable
 private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackController, onOpen: () -> Unit) {
-    Surface(color = Color(0xFF16202E), tonalElevation = 4.dp) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFF151F2E),
+        tonalElevation = 6.dp
+    ) {
         Row(
-            Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Rounded.Album,
-                contentDescription = null,
-                tint = Color(0xFF1DB954),
-                modifier = Modifier.size(34.dp)
-            )
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF132A1E)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Rounded.GraphicEq,
+                        contentDescription = null,
+                        tint = Color(0xFF1DB954),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(snapshot.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+                Text(
+                    snapshot.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
                 Text(
                     snapshot.artist,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF94A3B8)
                 )
             }
             IconButton(onClick = controller::togglePlayback) {
                 Icon(
                     if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = "Play or pause"
+                    contentDescription = "Play or pause",
+                    tint = Color(0xFF1DB954)
                 )
             }
             IconButton(onClick = controller::skipNext) {
-                Icon(Icons.Rounded.SkipNext, contentDescription = "Next track")
+                Icon(
+                    Icons.Rounded.SkipNext,
+                    contentDescription = "Next track",
+                    tint = Color.White
+                )
             }
         }
     }

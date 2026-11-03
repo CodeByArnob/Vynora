@@ -8,16 +8,20 @@ data class YouTubeItem(
     val description: String,
     val isPlaylist: Boolean = false,
     val publishedAt: String = "",
-    val releaseYear: String? = null
+    val releaseYear: String? = null,
+    val isOfficialChannel: Boolean = false
 ) {
     val uploadDateFormatted: String
-        get() = publishedAt.takeIf { it.length >= 10 }?.substring(0, 10) ?: "Recent upload"
+        get() = publishedAt.takeIf { it.length >= 10 }?.substring(0, 10) ?: "Recent"
 
     val releaseVsUploadLabel: String
-        get() = if (releaseYear != null) {
-            "Release $releaseYear · Uploaded $uploadDateFormatted"
-        } else {
-            "Uploaded $uploadDateFormatted"
+        get() = buildString {
+            if (isOfficialChannel) append("Official · ")
+            if (releaseYear != null) {
+                append("Release $releaseYear · $uploadDateFormatted")
+            } else {
+                append("Released $uploadDateFormatted")
+            }
         }
 }
 
@@ -31,13 +35,62 @@ object YouTubeMusicFilter {
         "fullscreen status",
         "ringtone",
         "reaction to",
-        "teaser reaction"
+        "teaser reaction",
+        "[artist",
+        "[singer",
+        "artist/singer",
+        "singer name]",
+        "artist name]",
+        "template",
+        "type beat",
+        "karaoke with lyrics"
     )
 
-    fun isGenuineMusicResult(title: String, description: String): Boolean {
-        val combined = "$title $description".lowercase()
+    private val officialIndianChannels = listOf(
+        "t-series",
+        "sony music india",
+        "zee music company",
+        "saregama",
+        "yrf",
+        "tips official",
+        "universal music india",
+        "indie music label",
+        "coke studio",
+        "arijit singh",
+        "speed records",
+        "white hill music",
+        "svf music",
+        "desi melodies",
+        "vyrl originals",
+        "panorama music",
+        "hitz music",
+        "play dmf"
+    )
+
+    fun cleanHtmlEntities(raw: String): String = raw
+        .replace("&amp;", "&")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&apos;", "'")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .trim()
+
+    fun isGenuineMusicResult(title: String, description: String, channelTitle: String = ""): Boolean {
+        val cleanedTitle = cleanHtmlEntities(title)
+        if (cleanedTitle.isBlank()) return false
+        val combined = "$cleanedTitle $description $channelTitle".lowercase()
         if (excludedPatterns.any { combined.contains(it) }) return false
-        return title.isNotBlank()
+        return true
+    }
+
+    fun isOfficialMusicChannel(channelTitle: String, title: String): Boolean {
+        val lowerChannel = channelTitle.lowercase()
+        val lowerTitle = title.lowercase()
+        return officialIndianChannels.any { lowerChannel.contains(it) } ||
+            lowerChannel.endsWith(" - topic") ||
+            lowerChannel.contains("vevo") ||
+            (lowerTitle.contains("official") && !lowerTitle.contains("["))
     }
 
     fun extractReleaseYear(title: String, description: String, publishedAt: String): String? {
