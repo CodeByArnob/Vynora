@@ -2,7 +2,7 @@ name: Vynora Native Android CI
 
 on:
   push:
-    branches: [main, native-kotlin-compose]
+    branches: [main]
     paths: ["app/**", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", ".github/workflows/native-android-ci.yml"]
   pull_request:
     branches: [main]
