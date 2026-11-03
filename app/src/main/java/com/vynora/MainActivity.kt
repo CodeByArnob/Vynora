@@ -193,11 +193,13 @@ private fun VynoraApp(
         }
     }
 
-    // Run smooth visualizer animation tick loop during active playback (~30 FPS)
-    LaunchedEffect(snapshot.isPlaying, snapshot.status) {
-        if (snapshot.isPlaying || snapshot.status == PlaybackStatus.PLAYING) {
+    // Run smooth visualizer animation tick loop during active playback (~30-60 FPS)
+    LaunchedEffect(snapshot.isPlaying, snapshot.status, selectedYouTubeItem) {
+        val isExoPlaying = snapshot.isPlaying || snapshot.status == PlaybackStatus.PLAYING
+        val isAnyPlaying = isExoPlaying || (selectedYouTubeItem != null)
+        if (isAnyPlaying) {
             val startTime = System.currentTimeMillis()
-            while (isActive && snapshot.isPlaying) {
+            while (isActive) {
                 val now = System.currentTimeMillis()
                 visualizerManager.tick(now - startTime, isPlaying = true)
                 delay(33L)
@@ -296,8 +298,23 @@ private fun VynoraApp(
                 }
             }
         ) { padding ->
-            // If user opened a playlist detail (Matches Image 1!)
-            if (selectedPlaylistForDetail != null && selectedTab == 0) {
+            if (selectedYouTubeItem != null) {
+                YouTubeWatchScreen(
+                    item = selectedYouTubeItem!!,
+                    queue = youTubeState.videos,
+                    snapshot = snapshot,
+                    controller = playbackController,
+                    visualizerFrame = visualizerFrame,
+                    onBack = { selectedYouTubeItem = null },
+                    onSelectQueueItem = { next ->
+                        youTubeViewModel.recordPlayed(next)
+                        selectedYouTubeItem = next
+                    },
+                    isFavorite = youTubeState.favoriteVideoIds.contains(selectedYouTubeItem!!.id),
+                    onToggleFavorite = { youTubeViewModel.toggleFavoriteVideo(selectedYouTubeItem!!.id) },
+                    modifier = Modifier.padding(padding)
+                )
+            } else if (selectedPlaylistForDetail != null && selectedTab == 0) {
                 PlaylistDetailScreen(
                     playlist = selectedPlaylistForDetail!!,
                     currentTrackUri = snapshot.queue.getOrNull(snapshot.currentIndex)?.uri,
@@ -342,6 +359,7 @@ private fun VynoraApp(
                                 queue = youTubeState.videos,
                                 snapshot = snapshot,
                                 controller = playbackController,
+                                visualizerFrame = visualizerFrame,
                                 onBack = { selectedTab = 0 },
                                 onSelectQueueItem = { next ->
                                     youTubeViewModel.recordPlayed(next)

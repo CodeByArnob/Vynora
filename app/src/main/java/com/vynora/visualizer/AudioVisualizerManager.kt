@@ -9,13 +9,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Manages native Android [Visualizer] capture with zero memory leaks, safe permission checks,
- * and automatic fallback to procedural audio animation if permission is denied or audio session is 0.
+ * Universal Audio Visualizer Manager:
+ * Combines three audio analysis pipelines:
+ * 1. ExoPlayer real-time PCM stream (zero permissions needed, 100% reliable across Bluetooth, local, & streaming).
+ * 2. Native Android Visualizer (FFT capture on supported devices when RECORD_AUDIO is granted).
+ * 3. YouTube/WebView rhythm pulse engine (synchronized audio rhythm during video mode).
+ * 4. Harmonic procedural wave fallback with smooth exponential decay on pause.
  */
 class AudioVisualizerManager(private val context: Context) {
     private var visualizer: Visualizer? = null
     private var currentSessionId: Int = 0
     private var lastRawFft: ByteArray? = null
+
+    @Volatile
+    private var latestPcmChunk: ByteArray? = null
+    @Volatile
+    private var latestPcmTime: Long = 0L
+
+    @Volatile
+    private var latestRhythmEnergy: Float = 0f
+    @Volatile
+    private var isRhythmPlaying: Boolean = false
 
     private val _currentFrame = MutableStateFlow(VisualizerDataProcessor.Frame())
     val currentFrame: StateFlow<VisualizerDataProcessor.Frame> = _currentFrame.asStateFlow()
@@ -25,6 +39,20 @@ class AudioVisualizerManager(private val context: Context) {
             context,
             android.Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
+
+    init {
+        // Register listener for real-time PCM audio chunks from ExoPlayer
+        AudioDataBridge.setPcmListener { pcm ->
+            latestPcmChunk = pcm
+            latestPcmTime = System.currentTimeMillis()
+        }
+
+        // Register listener for YouTube/WebView video mode rhythm pulses
+        AudioDataBridge.setRhythmListener { energy, isPlaying ->
+            latestRhythmEnergy = energy
+            isRhythmPlaying = isPlaying
+        }
+    }
 
     /**
      * Attaches to an active audio session ID from ExoPlayer.
@@ -41,7 +69,6 @@ class AudioVisualizerManager(private val context: Context) {
         currentSessionId = sessionId
 
         if (!hasRecordPermission) {
-            // Will use procedural reactive wave until permission is granted
             return
         }
 
@@ -56,16 +83,12 @@ class AudioVisualizerManager(private val context: Context) {
                         override fun onFftDataCapture(v: Visualizer?, fft: ByteArray?, samplingRate: Int) {
                             if (fft != null && fft.isNotEmpty()) {
                                 lastRawFft = fft
-                                _currentFrame.value = VisualizerDataProcessor.processFft(
-                                    fft = fft,
-                                    previousFrame = _currentFrame.value
-                                )
                             }
                         }
                     },
-                    Visualizer.getMaxCaptureRate() / 2, // 30-40 fps for battery and CPU efficiency
-                    false, // waveform not needed for FFT
-                    true   // FFT capture enabled
+                    Visualizer.getMaxCaptureRate() / 2,
+                    false,
+                    true
                 )
                 enabled = true
             }
@@ -73,30 +96,61 @@ class AudioVisualizerManager(private val context: Context) {
         } catch (_: SecurityException) {
             detach()
         } catch (_: RuntimeException) {
-            // Audio service or HAL not ready; will use procedural fallback
             detach()
         }
     }
 
     /**
-     * Called on each UI frame or timer tick to keep the visualizer fluid.
-     * If native FFT is active, processes the latest hardware FFT data.
-     * Otherwise, advances the procedural reactive audio wave.
+     * Called on each UI frame or timer tick (~30-60 FPS) to keep the visualizer fluid.
      */
     fun tick(elapsedMs: Long, isPlaying: Boolean) {
+        val now = System.currentTimeMillis()
+        val pcm = latestPcmChunk
+        val pcmFresh = pcm != null && (now - latestPcmTime < 250L)
+        val activePlaying = isPlaying || (isRhythmPlaying && (now - latestPcmTime < 1000L))
+
+        if (!activePlaying) {
+            // Smoothly decay to resting line when playback is paused or stopped
+            _currentFrame.value = VisualizerDataProcessor.createProceduralFrame(
+                elapsedMs = 0L,
+                isPlaying = false,
+                previousFrame = _currentFrame.value
+            )
+            return
+        }
+
+        // 1. Priority 1: Real PCM samples directly from ExoPlayer's audio sink
+        if (pcm != null && pcmFresh) {
+            _currentFrame.value = VisualizerDataProcessor.processPcm(
+                pcm = pcm,
+                previousFrame = _currentFrame.value
+            )
+            return
+        }
+
+        // 2. Priority 2: Native Android Visualizer hardware FFT
         val fft = lastRawFft
-        if (visualizer != null && fft != null && isPlaying) {
+        if (visualizer != null && fft != null) {
             _currentFrame.value = VisualizerDataProcessor.processFft(
                 fft = fft,
                 previousFrame = _currentFrame.value
             )
-        } else {
-            _currentFrame.value = VisualizerDataProcessor.createProceduralFrame(
-                elapsedMs = elapsedMs,
-                isPlaying = isPlaying,
-                previousFrame = _currentFrame.value
-            )
+            return
         }
+
+        // 3. Priority 3: YouTube/WebView video mode rhythm pulse or organic wave
+        _currentFrame.value = VisualizerDataProcessor.createProceduralFrame(
+            elapsedMs = elapsedMs,
+            isPlaying = true,
+            previousFrame = _currentFrame.value,
+            rhythmEnergy = latestRhythmEnergy
+        )
+    }
+
+    fun onTrackTransition() {
+        latestPcmChunk = null
+        lastRawFft = null
+        latestRhythmEnergy = 0f
     }
 
     @Synchronized
@@ -107,10 +161,13 @@ class AudioVisualizerManager(private val context: Context) {
         } catch (_: Exception) {}
         visualizer = null
         lastRawFft = null
+        latestPcmChunk = null
         currentSessionId = 0
     }
 
     fun release() {
         detach()
+        AudioDataBridge.setPcmListener(null)
+        AudioDataBridge.setRhythmListener(null)
     }
 }

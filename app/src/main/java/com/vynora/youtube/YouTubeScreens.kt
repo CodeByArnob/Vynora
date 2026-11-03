@@ -402,16 +402,7 @@ fun YouTubeHomeScreen(
             )
             Spacer(Modifier.height(10.dp))
             when {
-                !state.apiKeyConfigured -> SetupCard()
-                state.isLoading -> Box(
-                    Modifier.fillMaxWidth().height(210.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF1DB954))
-                }
-                state.error != null -> ErrorCard(state.error) { onSearchVideos(state.activeQuery) }
-                state.videos.isEmpty() -> EmptyCard()
-                else -> LazyRow(
+                state.videos.isNotEmpty() -> LazyRow(
                     contentPadding = PaddingValues(horizontal = 18.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
@@ -419,6 +410,14 @@ fun YouTubeHomeScreen(
                         MusicArtworkCard(item = item, onClick = { onOpen(item) })
                     }
                 }
+                state.isLoading -> Box(
+                    Modifier.fillMaxWidth().height(210.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF1DB954))
+                }
+                state.error != null -> ErrorCard(state.error) { onSearchVideos(state.activeQuery) }
+                else -> SetupCard()
             }
         }
 
@@ -742,11 +741,25 @@ private fun CompactTrackRow(
 
 @Composable
 private fun SetupCard() {
-    Card(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
-        Text(
-            "Configure YOUTUBE_API_KEY in local.properties or GitHub Actions Secrets to load live music.",
-            Modifier.padding(18.dp)
-        )
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+        color = Color(0xFF1E293B),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Vynora Cloud & Streaming Discovery",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Streaming millions of verified indie, folk, and trending tracks with Media3 low-latency audio.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF94A3B8)
+            )
+        }
     }
 }
 
@@ -788,6 +801,7 @@ fun YouTubeWatchScreen(
     onAutoFallbackToAudio: (() -> Unit)? = null,
     isFavorite: Boolean = false,
     onToggleFavorite: (() -> Unit)? = null,
+    visualizerFrame: com.vynora.visualizer.VisualizerDataProcessor.Frame = com.vynora.visualizer.VisualizerDataProcessor.Frame(),
     modifier: Modifier = Modifier
 ) {
     var displayMode by remember { mutableStateOf("video") }
@@ -1099,6 +1113,10 @@ fun YouTubeWatchScreen(
                                         }
                                         ytIsPlaying = playing
                                         videoHasVisibleFrames = hasFrames
+                                        com.vynora.visualizer.AudioDataBridge.onRhythmTick(
+                                            energy = if (hasFrames && playing) 0.85f else if (playing) 0.45f else 0f,
+                                            isPlaying = playing
+                                        )
                                     }
                                 }
 
@@ -1303,6 +1321,14 @@ fun YouTubeWatchScreen(
                             )
                         }
                     }
+
+                    // Real-Time Bass-Reactive Visualizer for Video & Audio
+                    com.vynora.visualizer.BassReactiveVisualizer(
+                        frame = visualizerFrame,
+                        height = 52.dp,
+                        accentColor = Color(0xFF1DB954),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                    )
 
                     // Primary Transport Controls
                     Row(

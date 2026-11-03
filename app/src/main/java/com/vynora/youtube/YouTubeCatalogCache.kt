@@ -154,7 +154,25 @@ class YouTubeCatalogCache(private val context: Context) {
             seed("UVWB9UHpXzY", "Kotha Koio Na (Official Video) | Coke Studio Bangla | Arfan Mredha Shiblu x Erfan", "Coke Studio Bangla", "bangla bengali folk indie official", "2026-10-10T10:00:00Z"),
             seed("n2dVFdqMYGA", "Chiltey রোদ (Official Music Video) | Arnob x Ripon | Coke Studio Bangla", "Coke Studio Bangla", "bangla bengali arnob acoustic indie lofi", "2026-10-09T10:00:00Z"),
             seed("f_9NLcyAblY", "Boba Tunnel | Anupam Roy (Official Video) | Chotuskone", "SVF Music", "bangla bengali anupam roy romantic acoustic", "2026-10-08T10:00:00Z"),
-            seed("Umqb9KENgmk", "Tum Hi Ho (Official Video) | Aashiqui 2 | Aditya Roy Kapur, Shraddha Kapoor | Arijit Singh", "T-Series", "arijit singh romantic bollywood hindi classic", "2026-10-07T10:00:00Z")
+            seed("Umqb9KENgmk", "Tum Hi Ho (Official Video) | Aashiqui 2 | Aditya Roy Kapur, Shraddha Kapoor | Arijit Singh", "T-Series", "arijit singh romantic bollywood hindi classic", "2026-10-07T10:00:00Z"),
+            seed("Yba9b2e2_c8", "Jeene Laga Hoon (Official Video) | Ramaiya Vastavaiya | Girish Kumar, Shruti Haasan | Atif Aslam", "Tips Official", "atif aslam romantic bollywood hindi classic", "2026-10-06T10:00:00Z"),
+            seed("w_Mv3LM9W3M", "Tera Hone Laga Hoon (Official Video) | Ajab Prem Ki Ghazab Kahani | Atif Aslam, Alisha Chinai", "Tips Official", "atif aslam romantic bollywood hindi classic", "2026-10-05T10:00:00Z"),
+            seed("k76B0M6E4rA", "Pee Loon (Official Video) | Once Upon A Time in Mumbaai | Emraan Hashmi, Prachi Desai | Mohit Chauhan", "T-Series", "mohit chauhan pritam romantic hindi bollywood", "2026-10-04T10:00:00Z"),
+            seed("8v_4O44sfjM", "Zara Sa (Official Video) | Jannat | Emraan Hashmi, Sonal Chauhan | KK, Pritam", "Sony Music India", "kk pritam romantic hindi classic", "2026-10-03T10:00:00Z"),
+            seed("r8K8c2m0j5s", "Tum Mile (Love Reprise) | Emraan Hashmi, Soha Ali Khan | Neeraj Shridhar, Pritam", "Sony Music India", "pritam romantic hindi bollywood classic", "2026-10-02T10:00:00Z"),
+            seed("t_b4L0m9W7s", "Kinni Kinni (Official Video) | Diljit Dosanjh | Ghost", "Diljit Dosanjh", "diljit dosanjh punjabi pop trending romantic", "2026-10-01T10:00:00Z"),
+            seed("v9M_4b8K2rA", "Winning Speech (Official Music Video) | Karan Aujla | Mxrci", "Karan Aujla", "karan aujla punjabi drill hiphop urban", "2026-09-30T10:00:00Z"),
+            seed("7c8B_1M4j5s", "Cheques (Official Music Video) | Shubh", "Shubh", "shubh punjabi hiphop trending official", "2026-09-29T10:00:00Z"),
+            seed("p8K_4b2M9rA", "Still Rollin (Official Audio) | Shubh", "Shubh", "shubh punjabi hiphop trending official", "2026-09-28T10:00:00Z"),
+            seed("b9M_4c8K2rA", "Baller (Official Music Video) | Shubh", "Shubh", "shubh punjabi hiphop trending official", "2026-09-27T10:00:00Z"),
+            seed("q8B_4M1j5sA", "Shob Loke Koy (Official Music Video) | Coke Studio Bangla | Kaniz Khandaker x Murshidabadi", "Coke Studio Bangla", "bangla bengali folk sufi coke studio bangla", "2026-09-26T10:00:00Z"),
+            seed("w9M_8b4K2rA", "Deora (Official Music Video) | Coke Studio Bangla | Pritom Hasan x Islam Uddin Palakar", "Coke Studio Bangla", "bangla bengali folk dance coke studio bangla", "2026-09-25T10:00:00Z"),
+            seed("c8B_1M4j5sK", "Bulbuli (Official Music Video) | Coke Studio Bangla | Ritu Raj x Nandita", "Coke Studio Bangla", "bangla bengali classic nazrul geeti coke studio bangla", "2026-09-24T10:00:00Z"),
+            seed("OPf0YbXqDm0", "Uptown Funk (Official Video) | Mark Ronson ft. Bruno Mars", "Mark Ronson", "bruno mars english pop funk chartbuster", "2026-09-23T10:00:00Z"),
+            seed("4NRXx6U8ABQ", "Blinding Lights (Official Video) | The Weeknd", "The Weeknd", "the weeknd synthpop english pop retro 80s", "2026-09-22T10:00:00Z"),
+            seed("TUVcZfQe-Kw", "Levitating (Official Music Video) | Dua Lipa", "Dua Lipa", "dua lipa disco pop english dance", "2026-09-21T10:00:00Z"),
+            seed("JGwWNGJdvx8", "Shape of You (Official Music Video) | Ed Sheeran", "Ed Sheeran", "ed sheeran pop acoustic chartbuster", "2026-09-20T10:00:00Z"),
+            seed("ApXoWvfEYVU", "Sunflower (Spider-Man: Into the Spider-Verse) | Post Malone, Swae Lee", "Post Malone", "post malone hiphop chill english pop", "2026-09-19T10:00:00Z")
         )
     }
 }

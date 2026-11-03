@@ -83,6 +83,10 @@ class PlaybackController(context: Context) {
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) {
+                PlaybackPerformanceMonitor.onAudioStarted()
+                requestAudioSessionId()
+            }
             refreshSnapshot()
             mainHandler.removeCallbacks(progressTicker)
             if (isPlaying || sleepTimerEndAt != null) {
@@ -91,18 +95,33 @@ class PlaybackController(context: Context) {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_READY) {
-                activeError = null
+            when (playbackState) {
+                Player.STATE_READY -> {
+                    activeError = null
+                    PlaybackPerformanceMonitor.onAudioStarted()
+                    requestAudioSessionId()
+                    controller?.let { c ->
+                        VynoraPreloadManager.preloadNextTracks(appContext, currentQueueTracks, c.currentMediaItemIndex)
+                    }
+                }
+                Player.STATE_BUFFERING -> {
+                    PlaybackPerformanceMonitor.onBufferingEvent()
+                }
             }
             refreshSnapshot()
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             activeError = null
+            requestAudioSessionId()
+            controller?.let { c ->
+                VynoraPreloadManager.preloadNextTracks(appContext, currentQueueTracks, c.currentMediaItemIndex)
+            }
             refreshSnapshot()
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            PlaybackPerformanceMonitor.onFailureEvent()
             val message = when (error.errorCode) {
                 PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
                 PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
@@ -160,9 +179,10 @@ class PlaybackController(context: Context) {
         }
 
         val command = SessionCommand(VynoraPlaybackService.ACTION_GET_AUDIO_SESSION_ID, Bundle.EMPTY)
-        player.sendCustomCommand(command, Bundle.EMPTY).addListener({
+        val future = player.sendCustomCommand(command, Bundle.EMPTY)
+        future.addListener({
             try {
-                val result = player.sendCustomCommand(command, Bundle.EMPTY).get()
+                val result = future.get()
                 val id = result.extras.getInt(VynoraPlaybackService.KEY_AUDIO_SESSION_ID, 0)
                 if (id > 0) {
                     cachedAudioSessionId = id
@@ -175,6 +195,8 @@ class PlaybackController(context: Context) {
     fun playQueue(tracks: List<AudioTrack>, startIndex: Int) {
         if (tracks.isEmpty() || startIndex !in tracks.indices) return
         activeError = null
+        PlaybackPerformanceMonitor.onPlayInitiated(isTrackSwitch = false)
+        PlaybackPerformanceMonitor.recordCacheHit(VynoraPreloadManager.isPreloaded(tracks[startIndex].uri))
         if (controller == null) {
             pendingQueue = tracks to startIndex
             currentQueueTracks = tracks
@@ -235,6 +257,10 @@ class PlaybackController(context: Context) {
 
     fun playTrackAt(index: Int) {
         val player = controller ?: return
+        PlaybackPerformanceMonitor.onPlayInitiated(isTrackSwitch = true)
+        if (index in currentQueueTracks.indices) {
+            PlaybackPerformanceMonitor.recordCacheHit(VynoraPreloadManager.isPreloaded(currentQueueTracks[index].uri))
+        }
         if (index in 0 until player.mediaItemCount) {
             player.seekToDefaultPosition(index)
             player.play()
@@ -270,6 +296,7 @@ class PlaybackController(context: Context) {
     fun skipNext() {
         val player = controller ?: return
         activeError = null
+        PlaybackPerformanceMonitor.onPlayInitiated(isTrackSwitch = true)
         if (player.hasNextMediaItem()) {
             player.seekToNextMediaItem()
         } else if (player.mediaItemCount > 0) {
@@ -280,6 +307,7 @@ class PlaybackController(context: Context) {
     fun skipPrevious() {
         val player = controller ?: return
         activeError = null
+        PlaybackPerformanceMonitor.onPlayInitiated(isTrackSwitch = true)
         if (player.currentPosition > 3_000L) {
             player.seekTo(0L)
         } else if (player.hasPreviousMediaItem()) {

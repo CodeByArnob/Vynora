@@ -163,31 +163,41 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
             error = null
         )
 
-        if (BuildConfig.YOUTUBE_API_KEY.isBlank()) return
-
         viewModelScope.launch {
-            try {
-                // Search YouTube with the smart-corrected query and unlimited date window so ANY song can be found
-                val apiQuery = "$correctedQuery official song"
-                val remoteResults = repository.searchVideos(apiQuery, recentWindowDays = 0L)
-                if (remoteResults.isNotEmpty()) {
-                    catalogCache.saveTracks(remoteResults)
-                    val updatedAll = catalogCache.loadAllTracks()
-                    val combinedResults = (remoteResults + localMatches).distinctBy { it.id }
-                    _state.value = _state.value.copy(
-                        videos = combinedResults,
-                        allCachedVideos = updatedAll,
-                        isLoading = false,
-                        error = null
-                    )
-                } else {
-                    _state.value = _state.value.copy(isLoading = false)
+            // Search Audius cloud tracks concurrently
+            launch {
+                val audiusResults = runCatching {
+                    audiusRepository.searchTracks(trimmed, limit = 20)
+                }.getOrDefault(emptyList())
+                if (audiusResults.isNotEmpty()) {
+                    _state.value = _state.value.copy(audiusTracks = audiusResults)
                 }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                // Keep local fuzzy search results visible even if network fails
-                _state.value = _state.value.copy(isLoading = false, error = null)
+            }
+
+            if (BuildConfig.YOUTUBE_API_KEY.isNotBlank()) {
+                try {
+                    val apiQuery = "$correctedQuery official song"
+                    val remoteResults = repository.searchVideos(apiQuery, recentWindowDays = 0L)
+                    if (remoteResults.isNotEmpty()) {
+                        catalogCache.saveTracks(remoteResults)
+                        val updatedAll = catalogCache.loadAllTracks()
+                        val combinedResults = (remoteResults + localMatches).distinctBy { it.id }
+                        _state.value = _state.value.copy(
+                            videos = combinedResults,
+                            allCachedVideos = updatedAll,
+                            isLoading = false,
+                            error = null
+                        )
+                    } else {
+                        _state.value = _state.value.copy(isLoading = false)
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    _state.value = _state.value.copy(isLoading = false, error = null)
+                }
+            } else {
+                _state.value = _state.value.copy(isLoading = false)
             }
         }
     }

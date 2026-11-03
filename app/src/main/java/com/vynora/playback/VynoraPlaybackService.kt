@@ -46,7 +46,19 @@ class VynoraPlaybackService : MediaSessionService() {
         val mediaSourceFactory = DefaultMediaSourceFactory(this)
             .setDataSourceFactory(VynoraAudioCache.createDataSourceFactory(this))
 
-        val renderersFactory = DefaultRenderersFactory(this).apply {
+        val visualizerAudioProcessor = com.vynora.visualizer.VisualizerAudioProcessor()
+
+        val renderersFactory = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: android.content.Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean
+            ): androidx.media3.exoplayer.audio.AudioSink {
+                return androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                    .setAudioProcessors(arrayOf(visualizerAudioProcessor))
+                    .build()
+            }
+        }.apply {
             setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
         }
 
