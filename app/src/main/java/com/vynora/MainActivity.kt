@@ -44,6 +44,7 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,6 +57,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
@@ -519,8 +521,38 @@ private fun NowPlayingScreen(
             IconButton(onClick = controller::skipNext) { Icon(Icons.Rounded.SkipNext, contentDescription = "Next track") }
             IconButton(onClick = controller::cycleRepeatMode) { Icon(Icons.Rounded.Repeat, contentDescription = "Cycle repeat mode", tint = if (snapshot.repeatMode != 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(12.dp))
+        var showSleepTimer by remember { mutableStateOf(false) }
+        TextButton(onClick = { showSleepTimer = true }) {
+            Text(snapshot.sleepTimerRemainingMs?.let { "Sleep timer · ${formatTime(it)}" } ?: "Sleep timer")
+        }
+        Spacer(Modifier.height(8.dp))
         Text("Background playback powered by Android Media3", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showSleepTimer) {
+            AlertDialog(
+                onDismissRequest = { showSleepTimer = false },
+                title = { Text("Sleep timer") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(15L, 30L, 45L, 60L).forEach { minutes ->
+                            TextButton(onClick = {
+                                controller.setSleepTimer(minutes * 60_000L)
+                                showSleepTimer = false
+                            }) { Text("${minutes} minutes") }
+                        }
+                        if (snapshot.sleepTimerRemainingMs != null) {
+                            TextButton(onClick = {
+                                controller.cancelSleepTimer()
+                                showSleepTimer = false
+                            }) { Text("Cancel active timer") }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showSleepTimer = false }) { Text("Close") }
+                }
+            )
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,7 +27,8 @@ data class PlaybackSnapshot(
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val shuffleEnabled: Boolean = false,
-    val repeatMode: Int = Player.REPEAT_MODE_OFF
+    val repeatMode: Int = Player.REPEAT_MODE_OFF,
+    val sleepTimerRemainingMs: Long? = null
 )
 
 @UnstableApi
@@ -39,6 +41,8 @@ class PlaybackController(context: Context) {
     private var pendingQueue: Pair<List<AudioTrack>, Int>? = null
     private val appContext = context.applicationContext
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var sleepTimerEndAt: Long? = null
+    private var sleepTimerRunnable: Runnable? = null
 
     private val progressTicker = object : Runnable {
         override fun run() {
@@ -116,6 +120,28 @@ class PlaybackController(context: Context) {
     fun skipPrevious() { controller?.seekToPreviousMediaItem() }
     fun seekTo(positionMs: Long) { controller?.seekTo(positionMs.coerceAtLeast(0L)) }
 
+    fun setSleepTimer(durationMs: Long) {
+        cancelSleepTimer()
+        if (durationMs <= 0L) return
+        sleepTimerEndAt = SystemClock.elapsedRealtime() + durationMs
+        val task = Runnable {
+            controller?.pause()
+            sleepTimerEndAt = null
+            sleepTimerRunnable = null
+            refreshSnapshot()
+        }
+        sleepTimerRunnable = task
+        mainHandler.postDelayed(task, durationMs)
+        refreshSnapshot()
+    }
+
+    fun cancelSleepTimer() {
+        sleepTimerRunnable?.let(mainHandler::removeCallbacks)
+        sleepTimerRunnable = null
+        sleepTimerEndAt = null
+        refreshSnapshot()
+    }
+
     fun toggleShuffle() {
         controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
         refreshSnapshot()
@@ -142,12 +168,14 @@ class PlaybackController(context: Context) {
             positionMs = player.currentPosition.coerceAtLeast(0L),
             durationMs = player.duration.takeIf { it > 0L } ?: 0L,
             shuffleEnabled = player.shuffleModeEnabled,
-            repeatMode = player.repeatMode
+            repeatMode = player.repeatMode,
+            sleepTimerRemainingMs = sleepTimerEndAt?.let { (it - SystemClock.elapsedRealtime()).coerceAtLeast(0L) }
         )
     }
 
     fun release() {
         mainHandler.removeCallbacks(progressTicker)
+        cancelSleepTimer()
         controller?.removeListener(listener)
         controller = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
