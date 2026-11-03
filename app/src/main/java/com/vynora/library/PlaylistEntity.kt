@@ -29,7 +29,7 @@ data class PlaylistEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("trackUri"), Index("playlistId", "position")]
+    indices = [Index(value = ["trackUri"]), Index(value = ["playlistId", "position"])]
 )
 data class PlaylistTrackEntity(
     val playlistId: Long,
