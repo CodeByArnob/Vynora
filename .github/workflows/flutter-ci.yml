@@ -54,7 +54,7 @@ jobs:
               )
 
           source = re.sub(
-              r'android:name="(?:\\.MainActivity|MainActivity)"',
+              r'android:name="(?:\.MainActivity|MainActivity)"',
               'android:name="com.ryanheise.audioservice.AudioServiceActivity"',
               source,
               count=1,
@@ -75,7 +75,7 @@ jobs:
           if missing:
               source = source.replace(
                   "<application",
-                  "\\n".join(missing) + "\\n    <application",
+                  "\n".join(missing) + "\n    <application",
                   1,
               )
 
@@ -99,7 +99,7 @@ jobs:
               </receiver>
           '''
           if "com.ryanheise.audioservice.AudioService" not in source:
-              source = source.replace("</application>", service_entries + "\\n    </application>", 1)
+              source = source.replace("</application>", service_entries + "\n    </application>", 1)
 
           manifest.write_text(source, encoding="utf-8")
           PY
