@@ -357,7 +357,7 @@ private fun TrackRow(track: AudioTrack, onClick: () -> Unit, onFavorite: () -> U
 @androidx.compose.runtime.Composable
 private fun EmptyLibrary(title: String, subtitle: String, action: String, onAction: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().weight(1f),
+        Modifier.fillMaxWidth().padding(vertical = 36.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -418,7 +418,7 @@ private fun NowPlayingScreen(
         Spacer(Modifier.height(18.dp))
         Slider(
             value = snapshot.positionMs.toFloat().coerceIn(0f, snapshot.durationMs.coerceAtLeast(1L).toFloat()),
-            onValueChange = controller::seekTo,
+            onValueChange = { controller.seekTo(it.toLong()) },
             valueRange = 0f..snapshot.durationMs.coerceAtLeast(1L).toFloat(),
             enabled = snapshot.durationMs > 0L
         )
@@ -456,27 +456,61 @@ private fun formatTime(milliseconds: Long): String {
 @androidx.compose.runtime.Composable
 private fun PlaylistsScreen(modifier: Modifier, libraryViewModel: LibraryViewModel) {
     val playlists by libraryViewModel.playlists.collectAsStateWithLifecycle()
+    val selectedId by libraryViewModel.selectedPlaylistId.collectAsStateWithLifecycle()
+    val selectedTracks by libraryViewModel.selectedPlaylistTracks.collectAsStateWithLifecycle()
     var showCreateDialog by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
+    val selectedPlaylist = playlists.firstOrNull { it.id == selectedId }
+
     Column(modifier.fillMaxSize().padding(20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Playlists", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("${playlists.size} collections", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(selectedPlaylist?.name ?: "Playlists", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    if (selectedPlaylist == null) "${playlists.size} collections" else "${selectedTracks.size} songs",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Button(onClick = { showCreateDialog = true }) { Text("New playlist") }
+            if (selectedPlaylist == null) {
+                Button(onClick = { showCreateDialog = true }) { Text("New playlist") }
+            } else {
+                androidx.compose.material3.TextButton(onClick = { libraryViewModel.selectPlaylist(null) }) { Text("Back") }
+            }
         }
         Spacer(Modifier.height(16.dp))
-        if (playlists.isEmpty()) {
-            EmptyLibrary("Create your first playlist", "Collect songs for every mood and moment.", "Create playlist", { showCreateDialog = true })
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(playlists, key = { it.id }) { playlist ->
-                    Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Text(playlist.name, modifier = Modifier.weight(1f).padding(start = 12.dp), fontWeight = FontWeight.SemiBold)
-                            Text("Playlist", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        when {
+            selectedPlaylist != null -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { libraryViewModel.addAllTracksToPlaylist(selectedPlaylist.id) }) { Text("Add library songs") }
+                    androidx.compose.material3.TextButton(onClick = { libraryViewModel.deletePlaylist(selectedPlaylist.id) }) { Text("Delete") }
+                }
+                Spacer(Modifier.height(12.dp))
+                if (selectedTracks.isEmpty()) {
+                    EmptyLibrary("This playlist is empty", "Add songs from your library to start listening.", "Add all songs", { libraryViewModel.addAllTracksToPlaylist(selectedPlaylist.id) })
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(selectedTracks, key = { it.uri }) { track ->
+                            TrackRow(track, onClick = { }, onFavorite = { libraryViewModel.removeTrackFromPlaylist(selectedPlaylist.id, track) })
+                        }
+                    }
+                }
+            }
+            playlists.isEmpty() -> {
+                EmptyLibrary("Create your first playlist", "Collect songs for every mood and moment.", "Create playlist", { showCreateDialog = true })
+            }
+            else -> {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(playlists, key = { it.id }) { playlist ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { libraryViewModel.selectPlaylist(playlist.id) },
+                            shape = RoundedCornerShape(18.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Text(playlist.name, modifier = Modifier.weight(1f).padding(start = 12.dp), fontWeight = FontWeight.SemiBold)
+                                Text("Open", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                 }
@@ -491,14 +525,11 @@ private fun PlaylistsScreen(modifier: Modifier, libraryViewModel: LibraryViewMod
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Playlist name") }, singleLine = true)
             },
             confirmButton = {
-                Button(
-                    enabled = name.isNotBlank(),
-                    onClick = {
-                        libraryViewModel.createPlaylist(name)
-                        showCreateDialog = false
-                        name = ""
-                    }
-                ) { Text("Create") }
+                Button(enabled = name.isNotBlank(), onClick = {
+                    libraryViewModel.createPlaylist(name)
+                    showCreateDialog = false
+                    name = ""
+                }) { Text("Create") }
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { showCreateDialog = false; name = "" }) { Text("Cancel") }

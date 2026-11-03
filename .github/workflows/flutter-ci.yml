@@ -1,150 +1,15 @@
-name: Flutter CI and Android QA
+name: Legacy Flutter CI (manual only)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  verify-and-build:
-    name: Format, analyze, test and build Android
+  legacy-check:
+    name: Archived Flutter source check
     runs-on: ubuntu-latest
-    timeout-minutes: 40
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Set up pinned Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.47.9
-          channel: stable
-          cache: true
-
-      - name: Bootstrap Android project when missing
-        id: android
-        shell: bash
-        run: |
-          if [ ! -d android ]; then
-            flutter create --platforms=android --org com.vynora --project-name vynora .
-            echo "created=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "created=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          source = manifest.read_text(encoding="utf-8")
-          source = source.replace('android:label="vynora"', 'android:label="Vynora"')
-
-          if 'xmlns:tools=' not in source:
-              source = source.replace(
-                  'xmlns:android="http://schemas.android.com/apk/res/android"',
-                  'xmlns:android="http://schemas.android.com/apk/res/android" '
-                  'xmlns:tools="http://schemas.android.com/tools"',
-                  1,
-              )
-
-          source = re.sub(
-              r'android:name="(?:\.MainActivity|MainActivity)"',
-              'android:name="com.ryanheise.audioservice.AudioServiceActivity"',
-              source,
-              count=1,
-          )
-
-          permissions = [
-              "android.permission.INTERNET",
-              "android.permission.WAKE_LOCK",
-              "android.permission.FOREGROUND_SERVICE",
-              "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-              "android.permission.POST_NOTIFICATIONS",
-          ]
-          missing = [
-              f'    <uses-permission android:name="{permission}" />'
-              for permission in permissions
-              if permission not in source
-          ]
-          if missing:
-              source = source.replace(
-                  "<application",
-                  "\n".join(missing) + "\n    <application",
-                  1,
-              )
-
-          service_entries = '''
-              <service
-                  android:name="com.ryanheise.audioservice.AudioService"
-                  android:foregroundServiceType="mediaPlayback"
-                  android:exported="true"
-                  tools:ignore="Instantiatable">
-                  <intent-filter>
-                      <action android:name="android.media.browse.MediaBrowserService" />
-                  </intent-filter>
-              </service>
-              <receiver
-                  android:name="com.ryanheise.audioservice.MediaButtonReceiver"
-                  android:exported="true"
-                  tools:ignore="Instantiatable">
-                  <intent-filter>
-                      <action android:name="android.intent.action.MEDIA_BUTTON" />
-                  </intent-filter>
-              </receiver>
-          '''
-          if "com.ryanheise.audioservice.AudioService" not in source:
-              source = source.replace("</application>", service_entries + "\n    </application>", 1)
-
-          manifest.write_text(source, encoding="utf-8")
-          PY
-
-      - name: Resolve dependencies
-        run: flutter pub get
-
-      - name: Generate Android launcher icons
-        run: dart run flutter_launcher_icons
-
-      - name: Apply canonical Dart formatting for diagnostic run
-        run: |
-          dart format .
-          git diff -- lib test
-
-      - name: Static analysis
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test --reporter expanded
-
-      - name: Build Android release-mode QA APK
-        run: >
-          flutter build apk --release
-          --dart-define=YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}
-
-      - name: Upload Android QA APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: vynora-android-qa-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Persist generated Android platform files
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          git add android pubspec.lock
-          if [ -f .metadata ]; then git add .metadata; fi
-          if ! git diff --cached --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore(android): add generated platform and audio service configuration"
-            git push origin HEAD:main
-          else
-            echo "No generated platform changes to persist."
-          fi
+      - name: Explain migration status
+        run: echo "Flutter is retained as legacy reference. Native Android CI is authoritative."
