@@ -1,0 +1,4 @@
+lib/** linguist-vendored
+test/** linguist-vendored
+pubspec.yaml linguist-vendored
+analysis_options.yaml linguist-vendored
