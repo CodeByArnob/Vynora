@@ -24,7 +24,7 @@ jobs:
     env:
       AUDIUS_API_KEY: ${{ secrets.AUDIUS_API_KEY }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         name: Checkout
       - uses: actions/setup-java@v5
         name: Set up JDK 17
