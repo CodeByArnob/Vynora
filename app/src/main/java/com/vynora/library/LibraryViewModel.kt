@@ -48,13 +48,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             _isScanning.value = true
             _scanError.value = null
             try {
-                val favoriteUris = trackDao.getFavoriteUris().toHashSet()
-                val scanned = repository.scanAudio().map { track ->
-                    track.copy(isFavorite = track.uri in favoriteUris)
-                }
-                trackDao.upsertAll(scanned)
-                if (scanned.isEmpty()) trackDao.deleteAll()
-                else trackDao.deleteMissing(scanned.map(AudioTrack::uri))
+                trackDao.synchronizeLibrary(repository.scanAudio())
             } catch (_: SecurityException) {
                 _scanError.value = "Audio permission is required to scan your library."
             } catch (error: Exception) {

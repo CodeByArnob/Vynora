@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -21,17 +22,36 @@ interface TrackDao {
     @Query("DELETE FROM tracks")
     suspend fun deleteAll()
 
-    @Query("DELETE FROM tracks WHERE uri NOT IN (:activeUris)")
-    suspend fun deleteMissing(activeUris: List<String>)
-
     @Query("UPDATE tracks SET isFavorite = :favorite WHERE uri = :uri")
     suspend fun setFavorite(uri: String, favorite: Boolean)
 
     @Query("SELECT uri FROM tracks WHERE isFavorite = 1")
     suspend fun getFavoriteUris(): List<String>
 
+    @Query("SELECT uri FROM tracks")
+    suspend fun getAllUris(): List<String>
+
+    @Query("DELETE FROM tracks WHERE uri IN (:uris)")
+    suspend fun deleteUris(uris: List<String>)
+
     @Query("SELECT COUNT(*) FROM tracks")
     fun observeCount(): Flow<Int>
+
+    @Transaction
+    suspend fun synchronizeLibrary(scannedTracks: List<AudioTrack>) {
+        val favoriteUris = getFavoriteUris().toHashSet()
+        val activeTracks = scannedTracks.map { track ->
+            track.copy(isFavorite = track.uri in favoriteUris)
+        }
+        upsertAll(activeTracks)
+
+        val activeUris = activeTracks.map(AudioTrack::uri).toHashSet()
+        val staleUris = getAllUris().filterNot(activeUris::contains)
+        // SQLite binds at most 999 variables in older supported Android versions.
+        staleUris.chunked(500).forEach { chunk ->
+            if (chunk.isNotEmpty()) deleteUris(chunk)
+        }
+    }
 }
 
 @Dao
