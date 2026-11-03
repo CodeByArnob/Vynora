@@ -101,6 +101,8 @@ fun YouTubeHomeScreen(
     onSearchVideos: (String) -> Unit,
     onSearchPlaylists: (String) -> Unit,
     onOpen: (YouTubeItem) -> Unit,
+    onSelectCategory: ((String, String) -> Unit)? = null,
+    onFilterLocalInstant: ((String) -> Unit)? = null,
     onPlayAudiusTrack: ((AudiusTrack) -> Unit)? = null,
     onSearchAudius: ((String) -> Unit)? = null,
     onToggleFavoriteVideo: ((String) -> Unit)? = null,
@@ -160,7 +162,11 @@ fun YouTubeHomeScreen(
                             Surface(
                                 modifier = Modifier.clickable {
                                     selectedChip = label
-                                    onSearchVideos(searchQuery)
+                                    if (onSelectCategory != null) {
+                                        onSelectCategory(label, searchQuery)
+                                    } else {
+                                        onSearchVideos(searchQuery)
+                                    }
                                 },
                                 shape = RoundedCornerShape(50),
                                 color = if (isSelected) Color(0xFF1DB954) else Color(0xFF18202C)
@@ -177,26 +183,61 @@ fun YouTubeHomeScreen(
                         }
                     }
 
-                    if (showSearchField) {
-                        OutlinedTextField(
-                            value = query,
-                            onValueChange = { query = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Search Hindi, Bollywood, Arijit Singh, Punjabi, Audius...") },
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                            trailingIcon = {
-                                if (query.isNotBlank()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = {
+                            query = it
+                            onFilterLocalInstant?.invoke(it)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search any song or artist (typo-smart search)...") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF1DB954)) },
+                        trailingIcon = {
+                            if (query.isNotBlank()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     TextButton(onClick = {
                                         onSearchVideos(query)
                                         onSearchAudius?.invoke(query)
                                     }) {
-                                        Text("Go", color = Color(0xFF1DB954), fontWeight = FontWeight.Bold)
+                                        Text("Search", color = Color(0xFF1DB954), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
-                        )
+                        }
+                    )
+                    if (state.correctedQuerySuggestion != null) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val corrected = state.correctedQuerySuggestion
+                                    query = corrected
+                                    onSearchVideos(corrected)
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF12281E)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Rounded.GraphicEq,
+                                    contentDescription = null,
+                                    tint = Color(0xFF1DB954),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Smart Match: Showing results for "${state.correctedQuerySuggestion}"",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color(0xFF1DB954),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
                     }
 
                     // Spotify-Style 2-Column Quick-Launch Grid
@@ -749,12 +790,17 @@ fun YouTubeWatchScreen(
     onToggleFavorite: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val playerWebView = remember { mutableStateOf<WebView?>(null) }
-    var displayMode by remember(item.id) { mutableStateOf("video") }
+    var displayMode by remember { mutableStateOf("video") }
+    var usingTheatreFallback by remember(item.id) {
+        mutableStateOf(YouTubeMusicFilter.prefersDirectWatchStream(item.channelTitle, item.title))
+    }
+    var videoHasVisibleFrames by remember(item.id) { mutableStateOf(false) }
     var ytIsPlaying by remember(item.id) { mutableStateOf(true) }
     var ytPositionSec by remember(item.id) { mutableStateOf(0f) }
     var ytDurationSec by remember(item.id) { mutableStateOf(0f) }
-    var usingTheatreFallback by remember(item.id) { mutableStateOf(false) }
+    val playerWebView = remember { mutableStateOf<WebView?>(null) }
+    val currentItemRef = remember { mutableStateOf(item) }
+    currentItemRef.value = item
 
     val injectTheatreCssJs = """
         (function() {
@@ -763,7 +809,7 @@ fun YouTubeWatchScreen(
             if (!style) {
               style = document.createElement('style');
               style.id = 'vynora-theatre-style';
-              style.innerHTML = 'ytm-mobile-topbar-renderer, #header-bar, ytm-slim-video-metadata-section-renderer, ytm-item-section-renderer, ytm-comment-section-renderer, ytm-pivot-bar-renderer, ytm-companion-slot, .related-chips-slot-wrapper, ytm-MerchandiseShelfRenderer, ytm-engagement-panel-section-list-renderer { display: none !important; } body, html { background: #000 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; } #player-container-id, .player-container, #player, .html5-video-player { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; max-height: 100vh !important; z-index: 999999 !important; background: #000 !important; } video { width: 100vw !important; height: 100vh !important; object-fit: contain !important; }';
+              style.innerHTML = 'ytm-mobile-topbar-renderer, #header-bar, ytm-slim-video-metadata-section-renderer, ytm-item-section-renderer, ytm-comment-section-renderer, ytm-pivot-bar-renderer, ytm-companion-slot, .related-chips-slot-wrapper, ytm-MerchandiseShelfRenderer, ytm-engagement-panel-section-list-renderer, .ytp-chrome-top, .ytp-watermark { display: none !important; } body, html { background: transparent !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; } video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: 2147483646 !important; background: transparent !important; }';
               document.head.appendChild(style);
             }
             var v = document.querySelector('video');
@@ -775,22 +821,110 @@ fun YouTubeWatchScreen(
               window.__vynoraTicker = setInterval(function() {
                 var vid = document.querySelector('video');
                 if (vid && window.VynoraBridge) {
-                  window.VynoraBridge.onProgress(
-                    Number(vid.currentTime || 0),
-                    Number(vid.duration || 0),
-                    !vid.paused
-                  );
+                  var cur = Number(vid.currentTime || 0);
+                  var dur = Number(vid.duration || 0);
+                  var playing = !vid.paused && !vid.ended;
+                  var hasFrames = vid.readyState >= 3 && vid.videoWidth > 0 && cur > 0.3 && playing;
+                  window.VynoraBridge.onProgress(cur, dur, playing, hasFrames);
                   if (vid.ended) {
                     window.VynoraBridge.onEnded();
                   }
                 }
-              }, 1000);
+              }, 800);
             }
           } catch (e) {}
         })();
     """.trimIndent()
 
-    DisposableEffect(item.id) {
+    fun loadTrackIntoWebView(webView: WebView, target: YouTubeItem, forceDirectWatch: Boolean) {
+        val safeId = target.id.replace("'", "").trim()
+        webView.stopLoading()
+        if (forceDirectWatch && !target.isPlaylist) {
+            webView.loadUrl(
+                "https://m.youtube.com/watch?v=$safeId&autoplay=1",
+                mapOf("Referer" to "https://m.youtube.com/")
+            )
+        } else {
+            val embedHtml = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                  <meta name="referrer" content="strict-origin-when-cross-origin">
+                  <style>
+                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+                    #player { width: 100%; height: 100%; border: 0; }
+                  </style>
+                </head>
+                <body>
+                  <div id="player"></div>
+                  <script src="https://www.youtube.com/iframe_api"></script>
+                  <script>
+                    var player;
+                    function onYouTubeIframeAPIReady() {
+                      player = new YT.Player('player', {
+                        width: '100%',
+                        height: '100%',
+                        ${if (target.isPlaylist) "playerVars: { listType: 'playlist', list: '$safeId', playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 }," else "videoId: '$safeId', playerVars: { playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 },"}
+                        events: {
+                          'onReady': function(e) {
+                            try { e.target.playVideo(); } catch (_) {}
+                            setInterval(function() {
+                              try {
+                                if (player && player.getCurrentTime && window.VynoraBridge) {
+                                  var cur = Number(player.getCurrentTime() || 0);
+                                  var dur = Number(player.getDuration() || 0);
+                                  var st = Number(player.getPlayerState() || -1);
+                                  var playing = (st === 1 || st === 3);
+                                  var hasFrames = (st === 1 && cur > 0.3);
+                                  window.VynoraBridge.onProgress(cur, dur, playing, hasFrames);
+                                }
+                              } catch (_) {}
+                            }, 800);
+                          },
+                          'onStateChange': function(e) {
+                            if (e.data === 0 && window.VynoraBridge) {
+                              window.VynoraBridge.onEnded();
+                            }
+                          },
+                          'onError': function(e) {
+                            if (window.VynoraBridge && window.VynoraBridge.onYouTubeError) {
+                              window.VynoraBridge.onYouTubeError(Number(e.data || 150));
+                            }
+                          }
+                        }
+                      });
+                    }
+                  </script>
+                </body>
+                </html>
+            """.trimIndent()
+
+            webView.loadDataWithBaseURL(
+                "https://www.youtube-nocookie.com/",
+                embedHtml,
+                "text/html",
+                "UTF-8",
+                null
+            )
+        }
+    }
+
+    // Switch tracks inside the single persistent WebView without destroying/recreating it (0ms UI switch!)
+    androidx.compose.runtime.LaunchedEffect(item.id) {
+        val wv = playerWebView.value ?: return@LaunchedEffect
+        val direct = YouTubeMusicFilter.prefersDirectWatchStream(item.channelTitle, item.title)
+        usingTheatreFallback = direct
+        videoHasVisibleFrames = false
+        ytPositionSec = 0f
+        ytDurationSec = 0f
+        ytIsPlaying = true
+        loadTrackIntoWebView(wv, item, direct)
+    }
+
+    // Only release WebView when leaving YouTubeWatchScreen altogether
+    DisposableEffect(Unit) {
         onDispose {
             playerWebView.value?.apply {
                 stopLoading()
@@ -811,7 +945,7 @@ fun YouTubeWatchScreen(
                 )
             )
     ) {
-        // 1. Fixed Top Bar (Never scrolls, zero recomposition lag)
+        // 1. Fixed Top Bar
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -831,7 +965,7 @@ fun YouTubeWatchScreen(
                 )
             }
 
-            // Segmented Video | Song Switcher (Keeps real YouTube song playing in both modes)
+            // Segmented Video | Song Switcher
             Surface(
                 shape = RoundedCornerShape(50),
                 color = Color(0xFF121824),
@@ -904,215 +1038,201 @@ fun YouTubeWatchScreen(
             }
         }
 
-        // 2. Fixed Hardware-Accelerated Player Stage (Outside LazyColumn for 60fps performance)
+        // 2. Fixed 16:9 Stage with Persistent WebView + Guaranteed High-Res Song Banner Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .aspectRatio(16f / 9f)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color.Black)
+                .background(Color(0xFF0B101B))
         ) {
-            key(item.id) {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { context ->
-                        WebView(context).apply {
-                            playerWebView.value = this
-                            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-                            CookieManager.getInstance().setAcceptCookie(true)
-                            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            settings.databaseEnabled = true
-                            settings.mediaPlaybackRequiresUserGesture = false
-                            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                            settings.loadsImagesAutomatically = true
-                            settings.javaScriptCanOpenWindowsAutomatically = false
-                            settings.cacheMode = WebSettings.LOAD_DEFAULT
-                            settings.userAgentString = settings.userAgentString
-                                .replace("; wv", "")
-                                .replace("Version/4.0 ", "")
-                            setBackgroundColor(android.graphics.Color.BLACK)
+            // Single Persistent WebView (Never destroyed on track switch -> instant switching!)
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context ->
+                    WebView(context).apply {
+                        playerWebView.value = this
+                        setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                        CookieManager.getInstance().setAcceptCookie(true)
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.databaseEnabled = true
+                        settings.mediaPlaybackRequiresUserGesture = false
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                        settings.loadsImagesAutomatically = true
+                        settings.javaScriptCanOpenWindowsAutomatically = false
+                        settings.cacheMode = WebSettings.LOAD_DEFAULT
+                        settings.userAgentString = settings.userAgentString
+                            .replace("; wv", "")
+                            .replace("Version/4.0 ", "")
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
-                            val safeId = item.id.replace("'", "").trim()
-
-                            addJavascriptInterface(
-                                object {
-                                    @JavascriptInterface
-                                    fun onYouTubeError(code: Int) {
-                                        post {
-                                            if (!usingTheatreFallback && !item.isPlaylist) {
-                                                usingTheatreFallback = true
-                                                // Switch to direct in-app YouTube mobile watch stream with theatre CSS so the REAL song plays
-                                                loadUrl(
-                                                    "https://m.youtube.com/watch?v=$safeId&autoplay=1",
-                                                    mapOf("Referer" to "https://m.youtube.com/")
-                                                )
-                                            }
+                        addJavascriptInterface(
+                            object {
+                                @JavascriptInterface
+                                fun onYouTubeError(code: Int) {
+                                    post {
+                                        val activeItem = currentItemRef.value
+                                        if (!usingTheatreFallback && !activeItem.isPlaylist) {
+                                            usingTheatreFallback = true
+                                            val safeId = activeItem.id.replace("'", "").trim()
+                                            loadUrl(
+                                                "https://m.youtube.com/watch?v=$safeId&autoplay=1",
+                                                mapOf("Referer" to "https://m.youtube.com/")
+                                            )
                                         }
                                     }
-
-                                    @JavascriptInterface
-                                    fun onProgress(currentSec: Double, durationSec: Double, playing: Boolean) {
-                                        post {
-                                            if (durationSec > 0) {
-                                                ytDurationSec = durationSec.toFloat()
-                                                ytPositionSec = currentSec.toFloat().coerceIn(0f, ytDurationSec)
-                                            }
-                                            ytIsPlaying = playing
-                                        }
-                                    }
-
-                                    @JavascriptInterface
-                                    fun onEnded() {
-                                        post {
-                                            onSkipNext?.invoke()
-                                        }
-                                    }
-                                },
-                                "VynoraBridge"
-                            )
-
-                            webChromeClient = object : WebChromeClient() {
-                                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                                    return true
-                                }
-                            }
-
-                            webViewClient = object : WebViewClient() {
-                                override fun shouldOverrideUrlLoading(
-                                    view: WebView?,
-                                    request: WebResourceRequest?
-                                ): Boolean {
-                                    val host = request?.url?.host?.lowercase().orEmpty()
-                                    return !(host.contains("youtube.com") ||
-                                        host.contains("youtube-nocookie.com") ||
-                                        host.contains("ytimg.com") ||
-                                        host.contains("googlevideo.com") ||
-                                        host.contains("google.com"))
                                 }
 
-                                override fun onPageFinished(view: WebView?, url: String?) {
-                                    super.onPageFinished(view, url)
-                                    if (url != null && url.contains("m.youtube.com/watch")) {
-                                        view?.evaluateJavascript(injectTheatreCssJs, null)
+                                @JavascriptInterface
+                                fun onProgress(
+                                    currentSec: Double,
+                                    durationSec: Double,
+                                    playing: Boolean,
+                                    hasFrames: Boolean
+                                ) {
+                                    post {
+                                        if (durationSec > 0) {
+                                            ytDurationSec = durationSec.toFloat()
+                                            ytPositionSec = currentSec.toFloat().coerceIn(0f, ytDurationSec)
+                                        }
+                                        ytIsPlaying = playing
+                                        videoHasVisibleFrames = hasFrames
                                     }
                                 }
-                            }
 
-                            val embedHtml = """
-                                <!DOCTYPE html>
-                                <html>
-                                <head>
-                                  <meta charset="utf-8">
-                                  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                                  <meta name="referrer" content="strict-origin-when-cross-origin">
-                                  <style>
-                                    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-                                    #player { width: 100%; height: 100%; border: 0; }
-                                  </style>
-                                </head>
-                                <body>
-                                  <div id="player"></div>
-                                  <script src="https://www.youtube.com/iframe_api"></script>
-                                  <script>
-                                    var player;
-                                    function onYouTubeIframeAPIReady() {
-                                      player = new YT.Player('player', {
-                                        width: '100%',
-                                        height: '100%',
-                                        ${if (item.isPlaylist) "playerVars: { listType: 'playlist', list: '$safeId', playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 }," else "videoId: '$safeId', playerVars: { playsinline: 1, autoplay: 1, rel: 0, modestbranding: 1 },"}
-                                        events: {
-                                          'onReady': function(e) {
-                                            try { e.target.playVideo(); } catch (_) {}
-                                            setInterval(function() {
-                                              try {
-                                                if (player && player.getCurrentTime && window.VynoraBridge) {
-                                                  var cur = Number(player.getCurrentTime() || 0);
-                                                  var dur = Number(player.getDuration() || 0);
-                                                  var st = Number(player.getPlayerState() || -1);
-                                                  window.VynoraBridge.onProgress(cur, dur, st === 1 || st === 3);
-                                                }
-                                              } catch (_) {}
-                                            }, 1000);
-                                          },
-                                          'onStateChange': function(e) {
-                                            if (e.data === 0 && window.VynoraBridge) {
-                                              window.VynoraBridge.onEnded();
-                                            }
-                                          },
-                                          'onError': function(e) {
-                                            if (window.VynoraBridge && window.VynoraBridge.onYouTubeError) {
-                                              window.VynoraBridge.onYouTubeError(Number(e.data || 150));
-                                            }
-                                          }
-                                        }
-                                      });
+                                @JavascriptInterface
+                                fun onEnded() {
+                                    post {
+                                        onSkipNext?.invoke()
                                     }
-                                  </script>
-                                </body>
-                                </html>
-                            """.trimIndent()
+                                }
+                            },
+                            "VynoraBridge"
+                        )
 
-                            loadDataWithBaseURL(
-                                "https://www.youtube-nocookie.com/",
-                                embedHtml,
-                                "text/html",
-                                "UTF-8",
-                                null
-                            )
+                        webChromeClient = object : WebChromeClient() {
+                            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean = true
                         }
-                    }
-                )
-            }
 
-            // When user selects "Song" mode, display crisp album artwork overlay while keeping real YouTube song playing!
-            if (displayMode == "song") {
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: WebResourceRequest?
+                            ): Boolean {
+                                val host = request?.url?.host?.lowercase().orEmpty()
+                                return !(host.contains("youtube.com") ||
+                                    host.contains("youtube-nocookie.com") ||
+                                    host.contains("ytimg.com") ||
+                                    host.contains("googlevideo.com") ||
+                                    host.contains("google.com"))
+                            }
+
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                if (url != null && url.contains("m.youtube.com/watch")) {
+                                    view?.evaluateJavascript(injectTheatreCssJs, null)
+                                }
+                            }
+                        }
+
+                        val direct = YouTubeMusicFilter.prefersDirectWatchStream(item.channelTitle, item.title)
+                        usingTheatreFallback = direct
+                        loadTrackIntoWebView(this, item, direct)
+                    }
+                }
+            )
+
+            // High-Resolution Track Banner Image Overlay:
+            // Shown in Song mode, during track switching/loading, or when label stream plays audio via direct watch
+            val showBannerOverlay = (displayMode == "song") || usingTheatreFallback || !videoHasVisibleFrames
+            if (showBannerOverlay) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFF0B101B)),
-                    contentAlignment = Alignment.Center
+                        .background(Color(0xFF0B101B))
                 ) {
+                    // Full-bleed 16:9 HD Track Banner Image
+                    AsyncImage(
+                        model = item.thumbnailUrl,
+                        contentDescription = item.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    // Cinematic gradient scrim so banner artwork + foreground card both pop clearly
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0x5507090E),
+                                        Color(0xAA07090E),
+                                        Color(0xEE07090E)
+                                    )
+                                )
+                            )
+                    )
+                    // Foreground Floating Artwork + Live Playback Status Card
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         AsyncImage(
                             model = item.thumbnailUrl,
                             contentDescription = item.title,
-                            modifier = Modifier.size(124.dp).clip(RoundedCornerShape(18.dp)),
+                            modifier = Modifier
+                                .size(92.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(16.dp)),
                             contentScale = ContentScale.Crop
                         )
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF12291E)
+                                color = Color(0xCC12291E)
                             ) {
-                                Text(
-                                    "SONG MODE · REAL TRACK AUDIO",
+                                Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF1DB954),
-                                    fontWeight = FontWeight.Bold
-                                )
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.GraphicEq,
+                                        contentDescription = null,
+                                        tint = Color(0xFF1DB954),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Text(
+                                        if (ytDurationSec > 0f) "NOW PLAYING · OFFICIAL STREAM" else "LOADING STREAM...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF1DB954),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                             Text(
                                 item.title,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             Text(
                                 item.channelTitle,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF94A3B8)
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFCBD5E1)
                             )
                         }
                     }
@@ -1185,7 +1305,7 @@ fun YouTubeWatchScreen(
                         }
                     }
 
-                    // Primary Transport Controls (Controls actual YouTube song!)
+                    // Primary Transport Controls
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -1249,7 +1369,7 @@ fun YouTubeWatchScreen(
             }
 
             if (queue.isNotEmpty()) {
-                item {
+                item(key = "upnext-header") {
                     Text(
                         "Up Next in Queue",
                         style = MaterialTheme.typography.titleMedium,
@@ -1259,7 +1379,7 @@ fun YouTubeWatchScreen(
                     )
                 }
                 items(
-                    items = queue.filterNot { it.id == item.id }.take(10),
+                    items = queue.filterNot { it.id == item.id }.take(12),
                     key = { "upnext-${it.id}" }
                 ) { nextTrack ->
                     Surface(

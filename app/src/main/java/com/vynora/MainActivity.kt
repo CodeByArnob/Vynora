@@ -250,6 +250,8 @@ private fun VynoraApp(
                     state = youTubeState,
                     onSearchVideos = youTubeViewModel::searchVideos,
                     onSearchPlaylists = youTubeViewModel::searchPlaylists,
+                    onSelectCategory = youTubeViewModel::selectCategory,
+                    onFilterLocalInstant = youTubeViewModel::filterLocalInstant,
                     onOpen = { item ->
                         playbackController.pause()
                         youTubeViewModel.recordPlayed(item)

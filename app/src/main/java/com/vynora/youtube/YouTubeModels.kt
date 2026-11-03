@@ -99,4 +99,34 @@ object YouTubeMusicFilter {
             ?: regex.find(description)?.value
             ?: publishedAt.takeIf { it.length >= 4 }?.substring(0, 4)
     }
+
+    private val embedRestrictedLabels = listOf(
+        "t-series",
+        "sony music",
+        "zee music",
+        "saregama",
+        "yrf",
+        "yash raj",
+        "tips official",
+        "tips music",
+        "speed records",
+        "white hill",
+        "universal music",
+        "svf music",
+        "desi melodies",
+        "vyrl",
+        "panorama music",
+        "hitz music",
+        "play dmf",
+        "venus"
+    )
+
+    /**
+     * Major Indian labels set embeddable=true in API v3 but block 3P iframe embeds with Error 150/152.
+     * Detecting them upfront avoids a 3-4 second failed /embed/ roundtrip when switching songs.
+     */
+    fun prefersDirectWatchStream(channelTitle: String, title: String): Boolean {
+        val combined = "$channelTitle $title".lowercase()
+        return embedRestrictedLabels.any { combined.contains(it) }
+    }
 }

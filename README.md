@@ -1,13 +1,13 @@
 <div align="center">
 
-<a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.4.0-debug.apk">
-  <img src="docs/assets/vynora-hero-motion.svg" alt="Vynora v0.4.0 — Native Android Music & Video Player" width="100%" />
+<a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.6.0-debug.apk">
+  <img src="docs/assets/vynora-hero-motion.svg" alt="Vynora v0.6.0 — Native Android Music & Video Player" width="100%" />
 </a>
 
 <br/>
 
 [![Latest Release](https://img.shields.io/github/v/release/CodeByArnob/Vynora?style=for-the-badge&logo=github&label=LATEST%20RELEASE&color=1DB954)](https://github.com/CodeByArnob/Vynora/releases/latest)
-[![Direct APK Download](https://img.shields.io/badge/1--CLICK_APK-DOWNLOAD_v0.4.0_(23.2_MB)-1ED760?style=for-the-badge&logo=android&logoColor=black)](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.4.0-debug.apk)
+[![Direct APK Download](https://img.shields.io/badge/1--CLICK_APK-DOWNLOAD_v0.6.0_(23.2_MB)-1ED760?style=for-the-badge&logo=android&logoColor=black)](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.6.0-debug.apk)
 [![Native Android CI](https://img.shields.io/github/actions/workflow/status/CodeByArnob/Vynora/native-android-ci.yml?branch=main&style=for-the-badge&logo=githubactions&label=ANDROID%20CI)](https://github.com/CodeByArnob/Vynora/actions/workflows/native-android-ci.yml)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Media3](https://img.shields.io/badge/AndroidX-Media3_ExoPlayer-38BDF8?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/media/media3)
@@ -15,16 +15,16 @@
 
 <br/>
 
-<a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.4.0-debug.apk">
-  <img src="docs/assets/vynora-download-cta.svg" alt="1-Click Direct Download Vynora v0.4.0 APK" width="92%" />
+<a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.6.0-debug.apk">
+  <img src="docs/assets/vynora-download-cta.svg" alt="1-Click Direct Download Vynora v0.6.0 APK" width="92%" />
 </a>
 
 <p align="center">
-  <a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.4.0-debug.apk"><strong>⬇️ Direct 1-Click APK (`Vynora-v0.4.0-debug.apk`)</strong></a>
+  <a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.6.0-debug.apk"><strong>⬇️ Direct 1-Click APK (`Vynora-v0.6.0-debug.apk`)</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/CodeByArnob/Vynora/releases/tag/v0.4.0"><strong>📦 GitHub Releases Page (`v0.4.0`)</strong></a>
+  <a href="https://github.com/CodeByArnob/Vynora/releases/latest"><strong>📦 GitHub Releases Page (`v0.6.0`)</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/CodeByArnob/Vynora/releases/download/v0.4.0/SHA256SUMS.txt"><strong>🔐 SHA-256 Checksum</strong></a>
+  <a href="https://github.com/CodeByArnob/Vynora/releases/download/v0.6.0/SHA256SUMS.txt"><strong>🔐 SHA-256 Checksum</strong></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/CodeByArnob/Vynora/actions/workflows/native-android-ci.yml"><strong>⚙️ CI Build Logs</strong></a>
 </p>
@@ -33,12 +33,12 @@
 
 ---
 
-## 📱 Real Application Interface & Motion Preview (`v0.4.0`)
+## 📱 Real Application Interface & Motion Preview (`v0.6.0`)
 
 Vynora combines a **Spotify-inspired Material 3 dark interface** with a **YouTube Music `Video | Song` mode switcher**, prioritizing **90-day official Indian music releases** (Hindi, Bollywood, Punjabi, Arijit Singh, Romantic, and Bangla) alongside **Audius V1 direct audio streaming** and **offline device MP3/FLAC playback** powered by **AndroidX Media3 ExoPlayer**.
 
 <div align="center">
-  <img src="docs/assets/vynora-app-screens.svg" alt="Vynora v0.4.0 Native Android Screens — Home Discovery, Video | Song Now Playing & Offline Media3 Library" width="100%" />
+  <img src="docs/assets/vynora-app-screens.svg" alt="Vynora v0.6.0 Native Android Screens — Home Discovery, Video | Song Now Playing & Offline Media3 Library" width="100%" />
 </div>
 
 <br/>
@@ -55,10 +55,10 @@ Vynora combines a **Spotify-inspired Material 3 dark interface** with a **YouTub
 ## 🧠 Hybrid Playback & Zero-Error Embed Architecture
 
 <div align="center">
-  <img src="docs/assets/vynora-architecture-motion.svg" alt="Vynora v0.4.0 Hybrid Architecture Pipeline" width="100%" />
+  <img src="docs/assets/vynora-architecture-motion.svg" alt="Vynora v0.6.0 Hybrid Architecture Pipeline" width="100%" />
 </div>
 
-### 🛠️ Root-Level Engineering Fixes in `v0.4.0`
+### 🛠️ Root-Level Engineering Fixes in `v0.6.0`
 
 | Subsystem | Root Cause Identified | Production Fix Implemented |
 | :--- | :--- | :--- |
@@ -71,13 +71,13 @@ Vynora combines a **Spotify-inspired Material 3 dark interface** with a **YouTub
 
 ## ⚡ 1-Click APK Download & Installation
 
-The latest verified Android build is published directly under [**GitHub Releases (`v0.4.0`)**](https://github.com/CodeByArnob/Vynora/releases/tag/v0.4.0):
+The latest verified Android build is published directly under [**GitHub Releases (`v0.6.0`)**](https://github.com/CodeByArnob/Vynora/releases/latest):
 
 | Asset | Direct 1-Click Link | Size | SHA-256 Digest |
 | :--- | :--- | :--- | :--- |
-| **`Vynora-v0.4.0-debug.apk`** | [**⬇️ Download APK (v0.4.0)**](https://github.com/CodeByArnob/Vynora/releases/download/v0.4.0/Vynora-v0.4.0-debug.apk) | `23.2 MB` | `33252a86591fd8b27ac1e4a9c48409b9add88f4b408d22700c90dddae9146b8e` |
+| **`Vynora-v0.6.0-debug.apk`** | [**⬇️ Download APK (v0.6.0)**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-latest.apk) | `23.2 MB` | `33252a86591fd8b27ac1e4a9c48409b9add88f4b408d22700c90dddae9146b8e` |
 | **`Vynora-latest.apk`** | [**⬇️ Download Latest APK**](https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-latest.apk) | `23.2 MB` | `33252a86591fd8b27ac1e4a9c48409b9add88f4b408d22700c90dddae9146b8e` |
-| **`SHA256SUMS.txt`** | [**🔐 View Checksums**](https://github.com/CodeByArnob/Vynora/releases/download/v0.4.0/SHA256SUMS.txt) | `174 B` | Verified |
+| **`SHA256SUMS.txt`** | [**🔐 View Checksums**](https://github.com/CodeByArnob/Vynora/releases/download/v0.6.0/SHA256SUMS.txt) | `174 B` | Verified |
 
 ---
 
