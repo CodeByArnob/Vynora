@@ -11,10 +11,13 @@ void main() {
           'channelTitle': 'Sample Artist',
           'categoryId': '10',
           'publishedAt': '2026-11-01T12:00:00Z',
-          'thumbnails': {'high': {'url': 'https://i.ytimg.com/sample.jpg'}},
+          'thumbnails': {
+            'high': {'url': 'https://i.ytimg.com/sample.jpg'},
+          },
         },
         'statistics': {'viewCount': '12345'},
       });
+
       expect(video.title, 'Sample track');
       expect(video.channelTitle, 'Sample Artist');
       expect(video.viewCount, 12345);
@@ -25,6 +28,7 @@ void main() {
 
     test('does not classify missing category as music', () {
       final video = TrendingVideo.fromJson({'id': 'abcdefghijk'});
+
       expect(video.title, 'Untitled');
       expect(video.channelTitle, 'Unknown artist');
       expect(video.viewCount, isNull);
