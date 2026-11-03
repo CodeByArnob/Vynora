@@ -14,8 +14,9 @@ class YouTubeDataRepository(private val apiKey: String) {
     private suspend fun search(query: String, type: String): List<YouTubeItem> = withContext(Dispatchers.IO) {
         require(apiKey.isNotBlank()) { "YouTube API key is not configured. Add YOUTUBE_API_KEY to local.properties or your CI secret." }
         val encodedQuery = URLEncoder.encode(query.trim(), Charsets.UTF_8.name())
+        val sort = if (type == "video") "&order=date" else "&order=relevance"
         val url = URL(
-            "https://www.googleapis.com/youtube/v3/search?part=snippet&type=$type&maxResults=24&q=$encodedQuery&key=$apiKey" +
+            "https://www.googleapis.com/youtube/v3/search?part=snippet&type=$type&maxResults=24&regionCode=IN&relevanceLanguage=hi&q=$encodedQuery&key=$apiKey$sort" +
                 if (type == "video") "&videoEmbeddable=true&videoSyndicated=true" else ""
         )
         val connection = (url.openConnection() as HttpURLConnection).apply {
