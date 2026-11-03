@@ -22,6 +22,9 @@ data class AudioTrack(
     val relativePath: String?,
     val isFavorite: Boolean = false
 ) {
+    @androidx.room.Ignore
+    var customArtworkUri: String? = null
+
     val durationLabel: String
         get() {
             val seconds = durationMs.coerceAtLeast(0L) / 1_000
@@ -29,8 +32,13 @@ data class AudioTrack(
         }
 
     val artworkUri: String?
-        get() = if (albumId > 0) "content://media/external/audio/albumart/$albumId" else null
+        get() = customArtworkUri
+            ?: if (albumId > 0) "content://media/external/audio/albumart/$albumId" else null
 
     val albumArtUri: String
         get() = artworkUri ?: ""
+
+    fun withArtwork(artUri: String): AudioTrack = this.apply {
+        customArtworkUri = artUri
+    }
 }

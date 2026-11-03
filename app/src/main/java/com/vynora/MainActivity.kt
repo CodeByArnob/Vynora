@@ -31,6 +31,9 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.PlayCircleOutline
+import com.vynora.ui.SamplesChevronIcon
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -244,13 +247,14 @@ private fun VynoraApp(
                         ) {
                             val tabs = listOf(
                                 Triple(0, "Home", Icons.Rounded.Home),
-                                Triple(1, "Samples", Icons.AutoMirrored.Rounded.PlaylistPlay),
+                                Triple(1, "Samples", null),
                                 Triple(2, "Explore", Icons.Rounded.Explore),
-                                Triple(3, "Library", Icons.Rounded.Bookmark),
-                                Triple(5, "Upgrade", Icons.AutoMirrored.Rounded.QueueMusic)
+                                Triple(3, "Library", Icons.Rounded.BookmarkBorder),
+                                Triple(5, "Upgrade", Icons.Rounded.PlayCircleOutline)
                             )
                             tabs.forEach { (index, title, icon) ->
                                 val isSelected = (selectedTab == index) || (selectedTab == 0 && selectedPlaylistForDetail != null && index == 0)
+                                val itemTint = if (isSelected) Color.White else Color(0xFFAAAAAA)
                                 NavigationBarItem(
                                     selected = isSelected,
                                     onClick = {
@@ -258,11 +262,18 @@ private fun VynoraApp(
                                         selectedTab = index
                                     },
                                     icon = {
-                                        Icon(
-                                            icon,
-                                            contentDescription = title,
-                                            modifier = Modifier.size(24.dp)
-                                        )
+                                        if (index == 1) {
+                                            SamplesChevronIcon(
+                                                size = 22.dp,
+                                                tint = itemTint
+                                            )
+                                        } else if (icon != null) {
+                                            Icon(
+                                                icon,
+                                                contentDescription = title,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
                                     },
                                     label = {
                                         Text(
@@ -441,12 +452,12 @@ private fun DockedMiniPlayer(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Square Artwork Thumbnail
+            // Square Artwork Thumbnail (Matches Images 1 & 2: plain dark gray #383838 when idle)
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(Color(0xFF333333)),
+                    .background(Color(0xFF383838)),
                 contentAlignment = Alignment.Center
             ) {
                 if (!snapshot.artworkUri.isNullOrBlank()) {
@@ -455,13 +466,6 @@ private fun DockedMiniPlayer(
                         contentDescription = snapshot.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        Icons.Rounded.Album,
-                        contentDescription = null,
-                        tint = Color(0xFF666666),
-                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

@@ -35,7 +35,11 @@ data class AudiusTrack(
         dateAddedSeconds = 0L,
         relativePath = "Audius",
         isFavorite = false
-    )
+    ).apply {
+        if (!artworkUrl.isNullOrBlank()) {
+            customArtworkUri = artworkUrl
+        }
+    }
 }
 
 class AudiusRepository(

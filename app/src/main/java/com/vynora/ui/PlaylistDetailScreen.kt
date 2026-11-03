@@ -61,7 +61,8 @@ data class PlaylistUiModel(
     val subtitle: String,
     val description: String,
     val coverUri: String,
-    val tracks: List<AudioTrack>
+    val tracks: List<AudioTrack>,
+    val curator: String = "YouTube Music"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,12 +101,10 @@ fun PlaylistDetailScreen(
                     )
                 }
 
-                IconButton(onClick = { /* Cast feature */ }) {
-                    Icon(
-                        Icons.Rounded.Cast,
-                        contentDescription = "Cast",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                IconButton(onClick = { /* Samples switch */ }) {
+                    SamplesChevronIcon(
+                        size = 22.dp,
+                        tint = Color.White
                     )
                 }
             }
@@ -149,10 +148,10 @@ fun PlaylistDetailScreen(
 
                 Spacer(Modifier.height(4.dp))
 
-                // Subtitle
+                // Subtitle / Curator
                 Text(
-                    text = playlist.subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = playlist.curator,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                     color = Color(0xFFAAAAAA),
                     textAlign = TextAlign.Center
                 )

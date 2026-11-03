@@ -88,21 +88,21 @@ fun HomeDiscoveryScreen(
                 id = "uncut_bollywood",
                 title = "Uncut Bollywood",
                 subtitle = "Arijit Singh, Pritam, Irshad Ka...",
-                description = "Enjoy stripped down versions of your favorite Bollywood tracks. #hindi #chill #relax",
-                coverUri = "file:///android_asset/album_arijit_romantic_1793701776833.jpg",
+                description = "Enjoy stripped down versions of your favorite Bollywood tracks.\n#hindi #chill #relax",
+                coverUri = "file:///android_asset/album_uncut_bollywood.jpg",
                 tracks = listOf(
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_1",
                         id = 101L,
                         title = "Gehra Hua",
-                        artist = "Arijit Singh, Armaan Khan, Shashwat Sachdev",
+                        artist = "Arijit Singh, Armaan Khan, Shashwat Sachdev & Irs...",
                         album = "Uncut Bollywood",
                         durationMs = 246_000L,
                         albumId = 1L,
                         artistId = 1L,
                         dateAddedSeconds = 1700000000L,
                         relativePath = null
-                    ),
+                    ).withArtwork("file:///android_asset/thumb_gehra_hua.jpg"),
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_2",
                         id = 102L,
@@ -114,7 +114,7 @@ fun HomeDiscoveryScreen(
                         artistId = 2L,
                         dateAddedSeconds = 1700000000L,
                         relativePath = null
-                    ),
+                    ).withArtwork("file:///android_asset/thumb_arz_kiya_hai.jpg"),
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_3",
                         id = 103L,
@@ -126,7 +126,7 @@ fun HomeDiscoveryScreen(
                         artistId = 3L,
                         dateAddedSeconds = 1700000000L,
                         relativePath = null
-                    ),
+                    ).withArtwork("file:///android_asset/thumb_barbaad.jpg"),
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_4",
                         id = 104L,
@@ -138,7 +138,7 @@ fun HomeDiscoveryScreen(
                         artistId = 4L,
                         dateAddedSeconds = 1700000000L,
                         relativePath = null
-                    ),
+                    ).withArtwork("file:///android_asset/thumb_naadaniyan.jpg"),
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_5",
                         id = 105L,
@@ -150,7 +150,7 @@ fun HomeDiscoveryScreen(
                         artistId = 1L,
                         dateAddedSeconds = 1700000000L,
                         relativePath = null
-                    )
+                    ).withArtwork("file:///android_asset/album_uncut_bollywood.jpg")
                 )
             ),
             PlaylistUiModel(
@@ -158,7 +158,7 @@ fun HomeDiscoveryScreen(
                 title = "00s Bollywood Romance",
                 subtitle = "Alka Yagnik, Pritam, Shreya Gh...",
                 description = "Iconic timeless Hindi melodies and golden romance memories of the 2000s.",
-                coverUri = "file:///android_asset/hero_hindi_bollywood_banner_1793701775755.jpg",
+                coverUri = "file:///android_asset/album_00s_bollywood_romance.jpg",
                 tracks = listOf(
                     AudioTrack(
                         uri = "https://audius.co/stream/romance_1",
@@ -516,24 +516,25 @@ fun HomeDiscoveryScreen(
                 ) {
                     item {
                         GetStartedCard(
+                            compositeImageUri = "file:///android_asset/card_my_mix_01.jpg",
                             title = "My Mix 01",
                             subtitle = "Try our perfect playlist for you",
-                            imageUri = "file:///android_asset/album_punjabi_beats_1793701777979.jpg",
                             bgColor = Color(0xFF223547),
                             onClick = { onPlaylistSelected(curatedPlaylists[0]) }
                         )
                     }
                     item {
                         GetStartedCard(
+                            compositeImageUri = "file:///android_asset/card_sam_smith_swipe.jpg",
                             title = "Discovery Swipe",
                             subtitle = "Find new music with a swipe",
-                            imageUri = "file:///android_asset/album_arijit_romantic_1793701776833.jpg",
                             bgColor = Color(0xFF4A252E),
                             onClick = { onPlaylistSelected(curatedPlaylists[1]) }
                         )
                     }
                     item {
                         GetStartedCard(
+                            compositeImageUri = null,
                             title = "Indie Beats",
                             subtitle = "Acoustic coffeehouse & late night sessions",
                             imageUri = "file:///android_asset/album_bangla_indie_1793701779257.jpg",
@@ -625,10 +626,11 @@ fun HomeDiscoveryScreen(
 
 @Composable
 private fun GetStartedCard(
-    title: String,
-    subtitle: String,
-    imageUri: String,
-    bgColor: Color,
+    compositeImageUri: String? = null,
+    title: String = "",
+    subtitle: String = "",
+    imageUri: String = "",
+    bgColor: Color = Color(0xFF222222),
     onClick: () -> Unit
 ) {
     Surface(
@@ -640,43 +642,52 @@ private fun GetStartedCard(
         color = bgColor,
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .background(Color(0xFF1E1E1E))
-            ) {
-                AsyncImage(
-                    model = imageUri,
-                    contentDescription = title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
+        if (!compositeImageUri.isNullOrBlank()) {
+            AsyncImage(
+                model = compositeImageUri,
+                contentDescription = title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxSize()
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = Color(0xFFDDDDDD),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .background(Color(0xFF1E1E1E))
+                ) {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = Color(0xFFDDDDDD),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
