@@ -2,15 +2,17 @@
 
 **Your music, beautifully organized.**
 
-Vynora is an open-source Flutter Material 3 music discovery and local music player project. The current app foundation provides a Bangladesh-focused YouTube trending-music metadata screen with thumbnail loading and explicit loading/error/empty states.
+Vynora is an open-source Flutter Material 3 music discovery and local music player. The Discover screen shows Bangladesh-focused YouTube trending-music metadata and thumbnails. The Library lets users import supported audio files through Android's system file picker, stores a private app copy, and plays the imported tracks locally.
 
-> **Playback boundary:** YouTube Data API provides video metadata, not downloadable audio. Vynora does not extract, download, proxy, or background-play YouTube audio. Selected YouTube videos open through the official YouTube app/site. A separate on-device audio player is still under development and is not yet part of the shipped feature set.
+> **Playback boundary:** YouTube Data API provides video metadata, not downloadable audio. Vynora does not extract, download, proxy, or background-play YouTube audio. Selected YouTube videos open through the official YouTube app/site. Local playback is limited to audio files the user selects and is authorized to play.
 
 ## Current release status
 
-This repository is **not production-ready yet**. The launcher icon source is included. GitHub Actions bootstraps the missing Android platform during a verified main-branch build, generates Android launcher resources, runs formatting, static analysis and tests, builds a release-mode QA APK, and then persists the generated Android project and lockfile to `main`.
+Vynora now has a local import/playback foundation, background audio integration, an app icon source, and Android build automation. It is **not yet a finished production release**. Device-wide MediaStore indexing, persistent playlists/favorites, richer metadata and album artwork, complete error/permission testing, and real-device validation remain outstanding.
 
-The QA APK uploaded by Actions is **not Play Store signed**. A protected upload keystore, signing configuration, store metadata, privacy disclosures, device testing and the remaining music-player features are still required before a public production release.
+GitHub Actions bootstraps the Android platform when missing, generates launcher resources, runs formatting, static analysis and tests, builds a release-mode QA APK, and persists generated Android files and the dependency lockfile to `main`.
+
+The QA APK uploaded by Actions is **not Play Store signed**. A protected upload keystore, verified signing configuration, store metadata, privacy disclosures and physical-device release validation are required before a public production release.
 
 ## Run locally
 
@@ -25,13 +27,21 @@ Do not commit API keys. A key passed through `--dart-define` is still extractabl
 
 ## Trending music source
 
-The app calls YouTube Data API v3 `videos.list` with `chart=mostPopular`, `regionCode=BD` and Music category ID `10`. Since July 21, 2025, YouTube's mostPopular chart reflects Trending Music, Movies and Gaming charts; filtering the Music category is used here. This is a regional trending chart, not a guarantee that every newly released song appears first.
+The app calls YouTube Data API v3 `videos.list` with `chart=mostPopular`, `regionCode=BD` and Music category ID `10`. This is YouTube's regional Music-category chart metadata, not a guarantee that every new release appears first.
+
+## Local music
+
+Choose **Add music** in the Library and select one or more supported audio files. Vynora copies the selected files into its app-private storage so the imported library is available on later launches. Removing a track deletes only Vynora's private copy, not the original selected file. Supported formats are MP3, M4A, AAC, FLAC, WAV, OGG and OPUS, subject to Android decoder support.
+
+Playback uses the local audio engine and Android media service for background notification and media controls. YouTube content is never used as a source for this player.
 
 ## Engineering
 
 - Flutter + Material 3, system light/dark themes
-- Riverpod async state management
+- Riverpod state management
 - YouTube metadata adapter isolated from presentation
+- Local file import, app-private storage and audio playback
+- Android background media service and notification controls
 - Vynora launcher icon source and Android icon generation
 - GitHub Actions: format, analyze, tests, Android QA build and platform bootstrap
 - Dependabot: weekly pub and GitHub Actions dependency update PRs
