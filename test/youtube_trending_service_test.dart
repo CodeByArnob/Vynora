@@ -20,7 +20,7 @@ void main() {
       service.close();
     });
 
-    test('requests the Bangladesh music chart and parses results', () async {
+    test('returns only music-category entries with artwork', () async {
       Uri? requestedUri;
       final client = MockClient((request) async {
         requestedUri = request.url;
@@ -28,15 +28,33 @@ void main() {
           jsonEncode({
             'items': [
               {
-                'id': 'abcdefghijk',
+                'id': 'music1234567',
                 'snippet': {
                   'title': 'Sample track',
                   'channelTitle': 'Sample artist',
+                  'categoryId': '10',
                   'thumbnails': {
                     'high': {'url': 'https://example.com/cover.jpg'},
                   },
                 },
                 'statistics': {'viewCount': '2500'},
+              },
+              {
+                'id': 'other123456',
+                'snippet': {
+                  'title': 'Not music',
+                  'categoryId': '20',
+                  'thumbnails': {
+                    'high': {'url': 'https://example.com/other.jpg'},
+                  },
+                },
+              },
+              {
+                'id': 'noimage12345',
+                'snippet': {
+                  'title': 'Music without artwork',
+                  'categoryId': '10',
+                },
               },
             ],
           }),
@@ -48,17 +66,20 @@ void main() {
         apiKey: 'test-key',
       );
 
-      final videos = await service.fetchTrendingMusic(maxResults: 100);
+      final tracks = await service.fetchTrendingMusic(maxResults: 100);
 
       expect(requestedUri?.host, 'www.googleapis.com');
       expect(requestedUri?.path, '/youtube/v3/videos');
       expect(requestedUri?.queryParameters['chart'], 'mostPopular');
       expect(requestedUri?.queryParameters['regionCode'], 'BD');
       expect(requestedUri?.queryParameters['videoCategoryId'], '10');
+      expect(requestedUri?.queryParameters['part'], 'snippet,statistics');
       expect(requestedUri?.queryParameters['maxResults'], '50');
-      expect(videos, hasLength(1));
-      expect(videos.single.title, 'Sample track');
-      expect(videos.single.viewCount, 2500);
+      expect(tracks, hasLength(1));
+      expect(tracks.single.title, 'Sample track');
+      expect(tracks.single.viewCount, 2500);
+      expect(tracks.single.isMusic, isTrue);
+      expect(tracks.single.thumbnailUrl, 'https://example.com/cover.jpg');
       service.close();
     });
 
