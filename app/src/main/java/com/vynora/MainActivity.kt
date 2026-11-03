@@ -77,6 +77,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.vynora.library.AudioTrack
 import com.vynora.library.LibraryViewModel
+import com.vynora.library.LibraryGrouping
 import com.vynora.playback.PlaybackController
 import com.vynora.playback.PlaybackSnapshot
 
@@ -248,15 +249,7 @@ private fun LibraryScreen(
         }
     }
     val groups = remember(searched, browseMode) {
-        when (browseMode) {
-            "Albums" -> searched.groupBy { "${it.value.album} • ${it.value.artist}" }
-            "Artists" -> searched.groupBy { it.value.artist }
-            "Folders" -> searched.groupBy {
-                it.value.relativePath?.trimEnd('/')?.substringAfterLast('/', it.value.relativePath)
-                    ?.takeIf(String::isNotBlank) ?: "Unknown folder"
-            }
-            else -> emptyMap()
-        }.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+        LibraryGrouping.group(searched, browseMode).associate { it.name to it.tracks }
     }
     val visibleTracks = remember(searched, browseMode, selectedGroup) {
         if (browseMode == "Songs") searched
