@@ -2,14 +2,15 @@ package com.vynora.playback
 
 import android.content.ComponentName
 import android.content.Context
-import androidx.core.net.toUri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -20,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.vynora.library.AudioTrack
 import java.util.concurrent.ExecutionException
 
+@Stable
 data class PlaybackSnapshot(
     val title: String = "Nothing playing",
     val artist: String = "Choose a song from your library",
@@ -44,15 +46,26 @@ class PlaybackController(context: Context) {
     private var sleepTimerEndAt: Long? = null
     private var sleepTimerRunnable: Runnable? = null
 
+    // Only tick when Media3 is actively playing audio to prevent idle UI recompositions
     private val progressTicker = object : Runnable {
         override fun run() {
-            refreshSnapshot()
-            mainHandler.postDelayed(this, 500L)
+            val active = controller?.isPlaying == true || sleepTimerEndAt != null
+            if (active) {
+                refreshSnapshot()
+                mainHandler.postDelayed(this, 1000L)
+            }
         }
     }
 
     private val listener = object : Player.Listener {
-        override fun onIsPlayingChanged(isPlaying: Boolean) = refreshSnapshot()
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            refreshSnapshot()
+            mainHandler.removeCallbacks(progressTicker)
+            if (isPlaying || sleepTimerEndAt != null) {
+                mainHandler.postDelayed(progressTicker, 1000L)
+            }
+        }
+
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshSnapshot()
         override fun onPlaybackStateChanged(playbackState: Int) = refreshSnapshot()
         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = refreshSnapshot()
@@ -80,7 +93,6 @@ class PlaybackController(context: Context) {
                 }
             }, ContextCompat.getMainExecutor(appContext))
         }
-        mainHandler.post(progressTicker)
     }
 
     fun playQueue(tracks: List<AudioTrack>, startIndex: Int) {
@@ -112,13 +124,26 @@ class PlaybackController(context: Context) {
         player.play()
     }
 
+    fun pause() {
+        controller?.pause()
+    }
+
     fun togglePlayback() {
         controller?.let { if (it.isPlaying) it.pause() else it.play() }
     }
 
-    fun skipNext() { controller?.seekToNextMediaItem() }
-    fun skipPrevious() { controller?.seekToPreviousMediaItem() }
-    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs.coerceAtLeast(0L)) }
+    fun skipNext() {
+        controller?.seekToNextMediaItem()
+    }
+
+    fun skipPrevious() {
+        controller?.seekToPreviousMediaItem()
+    }
+
+    fun seekTo(positionMs: Long) {
+        controller?.seekTo(positionMs.coerceAtLeast(0L))
+        refreshSnapshot()
+    }
 
     fun setSleepTimer(durationMs: Long) {
         cancelSleepTimer()
@@ -132,6 +157,8 @@ class PlaybackController(context: Context) {
         }
         sleepTimerRunnable = task
         mainHandler.postDelayed(task, durationMs)
+        mainHandler.removeCallbacks(progressTicker)
+        mainHandler.post(progressTicker)
         refreshSnapshot()
     }
 
@@ -161,7 +188,7 @@ class PlaybackController(context: Context) {
     private fun refreshSnapshot() {
         val player = controller ?: return
         val metadata = player.mediaMetadata
-        snapshot = PlaybackSnapshot(
+        val nextSnapshot = PlaybackSnapshot(
             title = metadata.title?.toString() ?: "Nothing playing",
             artist = metadata.artist?.toString() ?: "Unknown artist",
             isPlaying = player.isPlaying,
@@ -171,6 +198,9 @@ class PlaybackController(context: Context) {
             repeatMode = player.repeatMode,
             sleepTimerRemainingMs = sleepTimerEndAt?.let { (it - SystemClock.elapsedRealtime()).coerceAtLeast(0L) }
         )
+        if (nextSnapshot != snapshot) {
+            snapshot = nextSnapshot
+        }
     }
 
     fun release() {

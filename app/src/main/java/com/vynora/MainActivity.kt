@@ -154,22 +154,8 @@ private fun VynoraApp(
     }
 
     val startAudiusFallbackPlayback: () -> Unit = {
-        val currentYt = selectedYouTubeItem
-        if (currentYt != null) {
-            youTubeViewModel.resolveFallbackAudioQueue(currentYt) { queue ->
-                playbackController.playQueue(queue, 0)
-            }
-        } else {
-            val audiusList = youTubeState.audiusTracks
-            if (audiusList.isNotEmpty()) {
-                val streamQueue = audiusList.map {
-                    it.toAudioTrack(youTubeViewModel.audiusStreamUrl(it.id))
-                }
-                playbackController.playQueue(streamQueue, 0)
-            } else if (tracks.isNotEmpty()) {
-                playbackController.playQueue(tracks, 0)
-            }
-        }
+        // Real YouTube playback stays in-app via WebView theatre player; pause local Media3 to prevent audio overlap
+        playbackController.pause()
     }
 
     MaterialTheme(
@@ -265,7 +251,7 @@ private fun VynoraApp(
                     onSearchVideos = youTubeViewModel::searchVideos,
                     onSearchPlaylists = youTubeViewModel::searchPlaylists,
                     onOpen = { item ->
-                        if (snapshot.isPlaying) playbackController.togglePlayback()
+                        playbackController.pause()
                         youTubeViewModel.recordPlayed(item)
                         selectedYouTubeItem = item
                         selectedTab = 5

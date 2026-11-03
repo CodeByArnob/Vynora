@@ -130,16 +130,8 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
                 val matched = audiusRepository.searchTracks(cleanQuery, limit = 12)
                 val sourceList = if (matched.isNotEmpty()) matched else _state.value.audiusTracks
                 if (sourceList.isNotEmpty()) {
-                    val queue = sourceList.mapIndexed { idx, track ->
-                        val base = track.toAudioTrack(audiusStreamUrl(track.id))
-                        if (idx == 0) {
-                            base.copy(
-                                title = item.title,
-                                artist = item.channelTitle
-                            )
-                        } else {
-                            base
-                        }
+                    val queue = sourceList.map { track ->
+                        track.toAudioTrack(audiusStreamUrl(track.id))
                     }
                     onReady(queue)
                 }

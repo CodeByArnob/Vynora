@@ -8,8 +8,11 @@ import java.net.URL
 import java.net.URLEncoder
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 
 class YouTubeDataRepository(private val apiKey: String) {
+    private val cache = ConcurrentHashMap<String, List<YouTubeItem>>()
+
     suspend fun searchVideos(query: String, recentWindowDays: Long = 90L): List<YouTubeItem> =
         search(query, "video", recentWindowDays)
 
@@ -21,7 +24,11 @@ class YouTubeDataRepository(private val apiKey: String) {
             require(apiKey.isNotBlank()) {
                 "YouTube API key is not configured. Add YOUTUBE_API_KEY to local.properties or your GitHub Actions secret."
             }
+
             val cleanedQuery = query.trim().ifBlank { "latest Hindi songs T-Series Sony Music Zee Music official video" }
+            val cacheKey = "$type|$recentWindowDays|${cleanedQuery.lowercase()}"
+            cache[cacheKey]?.takeIf { it.isNotEmpty() }?.let { return@withContext it }
+
             val encodedQuery = URLEncoder.encode(cleanedQuery, Charsets.UTF_8.name())
             val publishedAfterParam = if (type == "video" && recentWindowDays > 0L) {
                 val cutoff = Instant.now().minus(recentWindowDays, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS).toString()
@@ -29,11 +36,13 @@ class YouTubeDataRepository(private val apiKey: String) {
             } else {
                 ""
             }
+
             val videoParams = if (type == "video") {
                 "&order=relevance&videoCategoryId=10&videoEmbeddable=true&videoSyndicated=true&safeSearch=none$publishedAfterParam"
             } else {
                 "&order=relevance"
             }
+
             val url = URL(
                 "https://www.googleapis.com/youtube/v3/search?part=snippet&type=$type&maxResults=35&regionCode=IN&relevanceLanguage=hi&q=$encodedQuery&key=$apiKey$videoParams"
             )
@@ -43,6 +52,7 @@ class YouTubeDataRepository(private val apiKey: String) {
                 readTimeout = 15_000
                 setRequestProperty("Accept", "application/json")
             }
+
             try {
                 val status = connection.responseCode
                 val stream = if (status in 200..299) connection.inputStream else connection.errorStream
@@ -52,7 +62,11 @@ class YouTubeDataRepository(private val apiKey: String) {
                         .getOrDefault("YouTube request failed (HTTP $status).")
                     throw IllegalStateException(message)
                 }
-                parseSearchResponse(body, type)
+                val parsed = parseSearchResponse(body, type)
+                if (parsed.isNotEmpty()) {
+                    cache[cacheKey] = parsed
+                }
+                parsed
             } finally {
                 connection.disconnect()
             }
@@ -71,14 +85,18 @@ class YouTubeDataRepository(private val apiKey: String) {
                 val title = YouTubeMusicFilter.cleanHtmlEntities(rawTitle)
                 val channelTitle = YouTubeMusicFilter.cleanHtmlEntities(snippet.optString("channelTitle", "YouTube Music"))
                 val description = snippet.optString("description", "")
+
                 if (type == "video" && !YouTubeMusicFilter.isGenuineMusicResult(title, description, channelTitle)) continue
+
                 val publishedAt = snippet.optString("publishedAt", "")
                 val thumbnails = snippet.optJSONObject("thumbnails")
                 val thumbnail = thumbnails?.optJSONObject("high")?.optString("url")
                     ?: thumbnails?.optJSONObject("medium")?.optString("url")
                     ?: thumbnails?.optJSONObject("default")?.optString("url")
                     ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+
                 val official = YouTubeMusicFilter.isOfficialMusicChannel(channelTitle, title)
+
                 add(
                     YouTubeItem(
                         id = id,
@@ -94,6 +112,7 @@ class YouTubeDataRepository(private val apiKey: String) {
                 )
             }
         }
+
         return parsed.sortedWith(
             compareByDescending<YouTubeItem> { it.isOfficialChannel }
                 .thenByDescending { it.publishedAt }
