@@ -87,7 +87,7 @@ object SmartMusicSearchEngine {
         val lower = input.lowercase().trim()
         if (lower.isEmpty()) return ""
         return lower
-            .replace(Regex("[^a-z0-9\s]"), " ")
+            .replace(Regex("[^a-z0-9\\s]"), " ")
             .replace("aa", "a")
             .replace("ee", "i")
             .replace("ii", "i")
@@ -104,8 +104,8 @@ object SmartMusicSearchEngine {
             .replace("sh", "s")
             .replace("z", "j")
             .replace("w", "v")
-            .replace(Regex("(.)\1+"), "$1")
-            .replace(Regex("\s+"), " ")
+            .replace(Regex("(.)\\1+"), "$1")
+            .replace(Regex("\\s+"), " ")
             .trim()
     }
 
@@ -122,7 +122,7 @@ object SmartMusicSearchEngine {
             return exact to (if (didChange) exact else null)
         }
 
-        val tokens = lower.split(Regex("\s+")).filter { it.isNotBlank() }
+        val tokens = lower.split(Regex("\\s+")).filter { it.isNotBlank() }
         var correctedAny = false
         val correctedTokens = tokens.map { token ->
             canonicalTerms[token]?.also {
@@ -167,8 +167,8 @@ object SmartMusicSearchEngine {
         if (trimmed.isEmpty()) return catalog
 
         val (corrected, _) = smartCorrectQuery(trimmed)
-        val rawTokens = trimmed.lowercase().split(Regex("\s+")).filter { it.isNotBlank() }
-        val correctedTokens = corrected.lowercase().split(Regex("\s+")).filter { it.isNotBlank() }
+        val rawTokens = trimmed.lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
+        val correctedTokens = corrected.lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
         val phoneticTokens = (rawTokens + correctedTokens).map { phoneticNormalize(it) }.filter { it.isNotBlank() }.distinct()
 
         val scored = catalog.mapNotNull { item ->

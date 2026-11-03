@@ -231,7 +231,7 @@ fun YouTubeHomeScreen(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = "Smart Match: Showing results for "${state.correctedQuerySuggestion}"",
+                                    text = "Smart Match: Showing results for \"${state.correctedQuerySuggestion}\"",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color(0xFF1DB954),
                                     fontWeight = FontWeight.SemiBold
