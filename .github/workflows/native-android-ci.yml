@@ -1,0 +1,72 @@
+name: Vynora Native Android CI
+
+on:
+  push:
+    branches: [main, native-kotlin-compose]
+    paths: ["app/**", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", ".github/workflows/native-android-ci.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["app/**", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", ".github/workflows/native-android-ci.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vynora-native-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, lint and test native Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        name: Checkout
+      - uses: actions/setup-java@v5
+        name: Set up JDK 17
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v5
+        name: Set up Gradle
+        with:
+          gradle-version: "8.13"
+      - name: Verify Android SDK
+        run: |
+          java -version
+          gradle --version
+          test -d "$ANDROID_HOME/platforms/android-36"
+      - name: Build debug APK
+        run: gradle :app:assembleDebug
+      - name: Android lint
+        id: android_lint
+        continue-on-error: true
+        run: gradle :app:lintDebug
+
+      - name: Upload Android lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vynora-android-lint-report
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Enforce clean Android lint
+        if: steps.android_lint.outcome == 'failure'
+        run: |
+          cat app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt || true
+          exit 1
+      - name: Run unit tests
+        run: gradle :app:testDebugUnitTest
+      - uses: actions/upload-artifact@v6
+        name: Upload debug APK
+        with:
+          name: vynora-native-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
