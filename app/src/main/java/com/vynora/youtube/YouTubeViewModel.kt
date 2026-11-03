@@ -16,7 +16,7 @@ data class YouTubeHomeState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val apiKeyConfigured: Boolean = BuildConfig.YOUTUBE_API_KEY.isNotBlank(),
-    val activeQuery: String = "popular Indian music official music video"
+    val activeQuery: String = "latest Hindi songs"
 )
 
 class YouTubeViewModel(application: Application) : AndroidViewModel(application) {
@@ -32,7 +32,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun searchVideos(query: String) {
-        val normalized = query.trim().ifBlank { "popular music official music video" }
+        val normalized = query.trim().ifBlank { "latest Hindi songs" }
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null, activeQuery = normalized)
             try {
@@ -47,7 +47,7 @@ class YouTubeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun searchPlaylists(query: String) {
-        val normalized = query.trim().ifBlank { "Indian music albums official" }
+        val normalized = query.trim().ifBlank { "latest Hindi music albums" }
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null, activeQuery = normalized)
             try {

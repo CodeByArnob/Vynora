@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,9 +22,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -55,145 +67,158 @@ fun YouTubeHomeScreen(
 ) {
     var query by remember { mutableStateOf("") }
     var showPlaylists by remember { mutableStateOf(false) }
-    Column(modifier.fillMaxSize()) {
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            item {
-                Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp)) {
-                    Text("Discover", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
-                    Text("Music from YouTube, alongside your offline library", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { Text("Search songs, artists, albums") }
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = {
-                            showPlaylists = false
-                            onSearchVideos(query)
-                        }) { Text("Search videos") }
-                        TextButton(onClick = {
-                            showPlaylists = true
-                            onSearchPlaylists(query)
-                        }) { Text("Albums & playlists") }
+    val categories = listOf(
+        "Latest Hindi" to "latest Hindi songs",
+        "Bollywood" to "new Bollywood Hindi songs",
+        "Arijit Singh" to "latest Arijit Singh songs",
+        "Punjabi" to "latest Punjabi songs",
+        "Romantic" to "new Hindi romantic songs",
+        "Bangla" to "latest Bangla songs"
+    )
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+        item {
+            Column(Modifier.padding(horizontal = 20.dp).padding(top = 18.dp)) {
+                Text("Discover", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                Text("Fresh music, picked for your mood", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(18.dp))
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(22.dp),
+                    placeholder = { Text("Search songs, artists or albums") },
+                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) }
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { showPlaylists = false; onSearchVideos(query.ifBlank { "latest Hindi songs" }) }) {
+                        Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.size(6.dp))
+                        Text("Search songs")
+                    }
+                    FilledTonalButton(onClick = { showPlaylists = true; onSearchPlaylists(query.ifBlank { "latest Hindi music albums" }) }) {
+                        Text("Playlists")
                     }
                 }
             }
+        }
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Box(Modifier.fillMaxWidth().background(
+                    Brush.linearGradient(listOf(Color(0xFF3D2B70), Color(0xFF754B87), Color(0xFF315B68)))
+                ).padding(22.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(color = Color.White.copy(alpha = .16f), shape = CircleShape) {
+                            Text("NEW & TRENDING", Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Text("Latest Hindi hits", style = MaterialTheme.typography.headlineMedium,
+                            color = Color.White, fontWeight = FontWeight.ExtraBold)
+                        Text("Discover the newest Bollywood releases and music from India.",
+                            color = Color.White.copy(alpha = .88f), style = MaterialTheme.typography.bodyMedium)
+                        FilledTonalButton(onClick = { showPlaylists = false; onSearchVideos("latest Hindi songs") }) {
+                            Text("Explore new songs")
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Explore genres", Modifier.padding(horizontal = 20.dp),
+                    style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(categories) { (label, search) ->
+                        AssistChip(onClick = { showPlaylists = false; onSearchVideos(search) }, label = { Text(label) })
+                    }
+                }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(if (showPlaylists) "Hindi albums & playlists" else "Latest Hindi songs",
+                        style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(if (showPlaylists) "Curated collections from YouTube" else "Newest uploads first · India",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = { showPlaylists = false; onSearchVideos("latest Hindi songs") }) { Text("Refresh") }
+            }
+        }
+        if (!state.apiKeyConfigured) {
+            item {
+                Card(Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
+                    Column(Modifier.padding(18.dp)) {
+                        Text("Connect YouTube", fontWeight = FontWeight.Bold)
+                        Text("Add YOUTUBE_API_KEY in GitHub Actions secrets or local.properties.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        } else if (state.isLoading) {
+            item { Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+        } else if (state.error != null) {
             item {
                 Column(Modifier.padding(horizontal = 20.dp)) {
-                    Box(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-                            .background(Brush.linearGradient(listOf(Color(0xFF583B83), Color(0xFF1D5262))))
-                            .padding(20.dp)
-                    ) {
-                        Column {
-                            Text("YOUR SOUNDTRACK", color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.labelLarge)
-                            Text("Find your next favorite", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                            Text("Explore music videos, artists and full playlists", color = Color.White.copy(alpha = 0.8f))
-                        }
+                    Text(state.error, color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = { if (showPlaylists) onSearchPlaylists(state.activeQuery) else onSearchVideos(state.activeQuery) }) {
+                        Text("Try again")
                     }
                 }
             }
-            item {
-                LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(listOf("Trending music", "Indian music", "Bangla music", "English hits", "Chill music")) { category ->
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.clickable {
-                                showPlaylists = false
-                                onSearchVideos(
-                                    when (category) {
-                                        "Indian music" -> "Indian music official video"
-                                        "Bangla music" -> "Bangla music official video"
-                                        "English hits" -> "English hit songs official music video"
-                                        "Chill music" -> "chill relaxing music official"
-                                        else -> "trending music official music video"
-                                    }
-                                )
-                            }
-                        ) { Text(category, Modifier.padding(horizontal = 16.dp, vertical = 10.dp), fontWeight = FontWeight.SemiBold) }
-                    }
-                }
-            }
-            item {
-                Text(
-                    if (showPlaylists) "Albums & playlists" else "Music videos",
-                    Modifier.padding(horizontal = 20.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            if (!state.apiKeyConfigured) {
-                item {
-                    Surface(
-                        Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Column(Modifier.padding(18.dp)) {
-                            Text("Connect YouTube", fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(6.dp))
-                            Text("Add a restricted YouTube Data API key as YOUTUBE_API_KEY in local.properties (or the GitHub Actions secret for release builds). The key is intentionally not included in source control.")
-                        }
-                    }
-                }
-            } else if (state.isLoading) {
-                item { Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
-            } else if (state.error != null) {
-                item {
-                    Column(Modifier.padding(horizontal = 20.dp)) {
-                        Text(state.error, color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = {
-                            if (showPlaylists) onSearchPlaylists(state.activeQuery) else onSearchVideos(state.activeQuery)
-                        }) { Text("Try again") }
-                    }
-                }
+        } else {
+            val results = if (showPlaylists) state.playlists else state.videos
+            if (results.isEmpty()) {
+                item { Text("No results yet. Search for an artist, song or album.", Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             } else {
-                val results = if (showPlaylists) state.playlists else state.videos
-                if (results.isEmpty()) {
-                    item { Text("No results yet. Search for an artist, song or album.", Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                } else {
-                    items(results, key = { "${if (it.isPlaylist) "p" else "v"}-${it.id}" }) { item ->
-                        YouTubeResultRow(item = item, onClick = { onOpen(item) })
-                    }
+                items(results, key = { "${if (it.isPlaylist) "p" else "v"}-${it.id}" }) { item ->
+                    YouTubeResultRow(item = item, onClick = { onOpen(item) })
                 }
             }
-            item {
-                Text(
-                    "YouTube content plays in the official embedded player. Offline and background playback remain available for music stored on your device.",
-                    Modifier.padding(horizontal = 20.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        }
+        item {
+            Text("Videos play through YouTube's official player. Your offline music library stays available anytime.",
+                Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
 private fun YouTubeResultRow(item: YouTubeItem, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant).clickable(onClick = onClick).padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        AsyncImage(
-            model = item.thumbnailUrl,
-            contentDescription = null,
-            modifier = Modifier.size(width = 132.dp, height = 82.dp).clip(RoundedCornerShape(10.dp))
-        )
-        Column(Modifier.weight(1f).padding(start = 12.dp)) {
-            Text(item.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(item.channelTitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            Text(if (item.isPlaylist) "YouTube playlist" else "YouTube video", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(width = 124.dp, height = 82.dp)) {
+                AsyncImage(model = item.thumbnailUrl, contentDescription = null,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)))
+                Surface(Modifier.align(Alignment.Center), color = Color.Black.copy(alpha = .68f), shape = CircleShape) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = "Play", tint = Color.White,
+                        modifier = Modifier.padding(5.dp).size(22.dp))
+                }
+            }
+            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(item.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(5.dp))
+                Text(item.channelTitle, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Text(if (item.isPlaylist) "PLAYLIST" else "MUSIC • VIDEO",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -206,6 +231,7 @@ fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier
         onDispose {
             playerWebView.value?.apply {
                 stopLoading()
+                loadUrl("about:blank")
                 webChromeClient = null
                 destroy()
             }
@@ -213,46 +239,61 @@ fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier
         }
     }
     Column(modifier.fillMaxSize()) {
-        TextButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) { Text("← Back to Discover") }
-        Box(Modifier.fillMaxWidth().height(240.dp).background(Color.Black), contentAlignment = Alignment.Center) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { context ->
-                    WebView(context).apply {
-                        playerWebView.value = this
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.mediaPlaybackRequiresUserGesture = true
-                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                        webChromeClient = WebChromeClient()
-                        val source = if (item.isPlaylist) {
-                            "https://www.youtube.com/embed/videoseries?list=${item.id}&playsinline=1"
-                        } else {
-                            "https://www.youtube.com/embed/${item.id}?playsinline=1"
-                        }
-                        val html = """
-                            <!doctype html><html><head>
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-                            <style>html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden}iframe{border:0;width:100%;height:100%}</style>
-                            </head><body>
-                            <iframe src="$source" title="YouTube player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                            </body></html>
-                        """.trimIndent()
-                        loadDataWithBaseURL("https://www.youtube.com/", html, "text/html", "UTF-8", null)
-                    }
-                },
-                update = { }
-            )
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalButton(onClick = onBack) {
+                Icon(Icons.Rounded.ArrowBack, contentDescription = null)
+                Spacer(Modifier.size(6.dp))
+                Text("Discover")
+            }
+            Spacer(Modifier.size(12.dp))
+            Text("NOW PLAYING", style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
-        Spacer(Modifier.height(16.dp))
-        Text(item.title, Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(item.channelTitle, Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Playback is provided by YouTube. Keep this player visible while watching; YouTube background audio and audio-only extraction are not supported.",
-            Modifier.padding(horizontal = 20.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        AndroidView(
+            modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(20.dp)).background(Color.Black),
+            factory = { context ->
+                WebView(context).apply {
+                    playerWebView.value = this
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = true
+                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                    settings.loadsImagesAutomatically = true
+                    settings.javaScriptCanOpenWindowsAutomatically = false
+                    webViewClient = WebViewClient()
+                    webChromeClient = WebChromeClient()
+                    val videoOrigin = "https://www.youtube.com"
+                    val source = if (item.isPlaylist) {
+                        "$videoOrigin/embed/videoseries?list=${item.id}&playsinline=1&enablejsapi=1&origin=$videoOrigin"
+                    } else {
+                        "$videoOrigin/embed/${item.id}?playsinline=1&enablejsapi=1&origin=$videoOrigin"
+                    }
+                    val html = """
+                        <!doctype html><html><head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                        <meta name="referrer" content="strict-origin-when-cross-origin">
+                        <style>html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden}iframe{border:0;width:100%;height:100%}</style>
+                        </head><body>
+                        <iframe src="$source" title="YouTube player"
+                          referrerpolicy="strict-origin-when-cross-origin"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowfullscreen></iframe>
+                        </body></html>
+                    """.trimIndent()
+                    loadDataWithBaseURL(videoOrigin, html, "text/html", "UTF-8", null)
+                }
+            }
         )
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("NOW PLAYING", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Text(item.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(item.channelTitle, style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Official YouTube playback", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
