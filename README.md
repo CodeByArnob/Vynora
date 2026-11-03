@@ -215,7 +215,7 @@ cd Vynora
 
 ---
 
-## 🤝 Extending Vynora — Contributor Technical Roadmap
+## 🤝 Extending Vynora Contributor Technical Roadmap
 
 Vynora is designed to be easily extensible. Developers looking to contribute are invited to explore the following architectural extension points:
 
