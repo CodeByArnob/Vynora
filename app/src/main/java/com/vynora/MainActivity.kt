@@ -239,29 +239,62 @@ private fun LibraryScreen(
     onRescan: () -> Unit,
     onFavorite: (AudioTrack, Boolean) -> Unit
 ) {
-    val filtered = remember(tracks, query) {
+    var browseMode by remember { mutableStateOf("Songs") }
+    var selectedGroup by remember { mutableStateOf<String?>(null) }
+    val searched = remember(tracks, query) {
         tracks.withIndex().filter { (_, track) ->
-            "${track.title} ${track.artist} ${track.album}".contains(query, ignoreCase = true)
+            "${track.title} ${track.artist} ${track.album} ${track.relativePath.orEmpty()}"
+                .contains(query, ignoreCase = true)
         }
     }
+    val groups = remember(searched, browseMode) {
+        when (browseMode) {
+            "Albums" -> searched.groupBy { "${it.value.album} • ${it.value.artist}" }
+            "Artists" -> searched.groupBy { it.value.artist }
+            "Folders" -> searched.groupBy {
+                it.value.relativePath?.trimEnd('/')?.substringAfterLast('/', it.value.relativePath)
+                    ?.takeIf(String::isNotBlank) ?: "Unknown folder"
+            }
+            else -> emptyMap()
+        }.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+    }
+    val visibleTracks = remember(searched, browseMode, selectedGroup) {
+        if (browseMode == "Songs") searched
+        else selectedGroup?.let { selected -> groups[selected].orEmpty() } ?: emptyList()
+    }
+
     Column(modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(14.dp))
-        Text("Your library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(if (selectedGroup == null) "Your library" else selectedGroup.orEmpty(),
+            style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text("${tracks.size} songs on this device", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(14.dp))
         OutlinedTextField(
             value = query,
-            onValueChange = onQueryChange,
+            onValueChange = { onQueryChange(it); selectedGroup = null },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Search songs, artists, albums") },
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             singleLine = true,
             shape = RoundedCornerShape(18.dp)
         )
-        scanError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf("Songs", "Albums", "Artists", "Folders").forEach { mode ->
+                androidx.compose.material3.TextButton(onClick = {
+                    browseMode = mode
+                    selectedGroup = null
+                }) {
+                    Text(mode, color = if (browseMode == mode) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (browseMode == mode) FontWeight.Bold else FontWeight.Normal)
+                }
+            }
         }
-        Spacer(Modifier.height(16.dp))
+        scanError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp))
+        }
+        Spacer(Modifier.height(8.dp))
         when {
             !hasPermission -> EmptyLibrary(
                 title = "Let Vynora find your music",
@@ -278,21 +311,53 @@ private fun LibraryScreen(
                 action = "Scan again",
                 onAction = onRescan
             )
-            filtered.isEmpty() -> EmptyLibrary(
+            browseMode != "Songs" && selectedGroup == null -> {
+                if (groups.isEmpty()) {
+                    EmptyLibrary("Nothing to browse", "Try scanning your music library again.", "Rescan", onRescan)
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(groups.keys.toList(), key = { it }) { group ->
+                            val count = groups[group]?.size ?: 0
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable { selectedGroup = group },
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Album, contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                        Text(group, fontWeight = FontWeight.SemiBold, maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis)
+                                        Text("$count songs", style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            visibleTracks.isEmpty() -> EmptyLibrary(
                 title = "No matching songs",
-                subtitle = "Try another song, artist or album name.",
+                subtitle = "Try another search or choose a different collection.",
                 action = "Clear search",
-                onAction = { onQueryChange("") }
+                onAction = { onQueryChange(""); selectedGroup = null }
             )
             else -> {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("ALL SONGS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    if (selectedGroup != null) {
+                        androidx.compose.material3.TextButton(onClick = { selectedGroup = null }) { Text("← Back") }
+                    }
+                    Text(if (browseMode == "Songs") "ALL SONGS" else "${visibleTracks.size} TRACKS",
+                        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold)
                     Spacer(Modifier.weight(1f))
-                    Text("Tap a song to play", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Tap a song to play", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Spacer(Modifier.height(8.dp))
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(filtered, key = { it.value.uri }) { indexed ->
+                    items(visibleTracks, key = { it.value.uri }) { indexed ->
                         TrackRow(
                             track = indexed.value,
                             onClick = { onPlay(indexed.index) },
