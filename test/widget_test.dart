@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vynora/features/discover/domain/trending_video.dart';
 import 'package:vynora/features/discover/presentation/discover_screen.dart';
 import 'package:vynora/features/library/data/local_music_providers.dart';
 import 'package:vynora/features/library/domain/local_track.dart';
