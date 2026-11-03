@@ -16,8 +16,8 @@ class YouTubeApiException implements Exception {
 /// Retrieves YouTube Music-category metadata and artwork only.
 class YouTubeTrendingService {
   YouTubeTrendingService({http.Client? client, String? apiKey})
-      : _client = client ?? http.Client(),
-        _apiKey = apiKey ?? const String.fromEnvironment('YOUTUBE_API_KEY');
+    : _client = client ?? http.Client(),
+      _apiKey = apiKey ?? const String.fromEnvironment('YOUTUBE_API_KEY');
 
   final http.Client _client;
   final String _apiKey;
@@ -48,9 +48,9 @@ class YouTubeTrendingService {
       'key': _apiKey,
     });
 
-    final response = await _client.get(uri).timeout(
-          const Duration(seconds: 15),
-        );
+    final response = await _client
+        .get(uri)
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode != 200) {
       String? message;
