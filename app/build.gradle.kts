@@ -12,6 +12,8 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use(localProperties::load)
 val youtubeApiKey = (System.getenv("YOUTUBE_API_KEY") ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: "")
     .replace("\\", "\\\\").replace("\"", "\\\"")
+val audiusApiKey = (System.getenv("AUDIUS_API_KEY") ?: localProperties.getProperty("AUDIUS_API_KEY") ?: "")
+    .replace("\\", "\\\\").replace("\"", "\\\"")
 
 
 android {
@@ -19,6 +21,7 @@ android {
  compileSdk = 36
  defaultConfig {
   buildConfigField("String", "YOUTUBE_API_KEY", "\"$youtubeApiKey\"")
+  buildConfigField("String", "AUDIUS_API_KEY", "\"$audiusApiKey\"")
   applicationId = "com.vynora"
   minSdk = 26
   targetSdk = 36

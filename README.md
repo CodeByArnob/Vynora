@@ -20,6 +20,8 @@ Vynora is an offline-first Android music player focused on a clean native experi
 
 ## Online music discovery
 
+Audius integration is being added for audio-only discovery and playback. Configure a GitHub Actions repository secret named `AUDIUS_API_KEY` for CI/release builds, or add `AUDIUS_API_KEY=your_api_key` to your untracked root `local.properties` for local builds. The Audius API key is designed for client-side use; never put the separate Audius Bearer Token in the Android app or source control.
+
 Vynora can discover public YouTube music videos and playlists through the YouTube Data API and play selected content in the official embedded YouTube player. Local device music remains available through the native Media3 player.
 
 YouTube playback is subject to YouTube's developer policies: the app does not extract audio, download/cache YouTube media, or provide YouTube background/miniplayer audio. The embedded player remains visible while YouTube content is playing. Background playback and offline playback apply only to music files already stored on the device.
