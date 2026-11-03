@@ -21,6 +21,8 @@ jobs:
     name: Build, lint and test native Android
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
     steps:
       - uses: actions/checkout@v5
         name: Checkout

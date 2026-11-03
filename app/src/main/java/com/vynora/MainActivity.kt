@@ -82,11 +82,16 @@ import com.vynora.library.LibraryViewModel
 import com.vynora.library.LibraryGrouping
 import com.vynora.playback.PlaybackController
 import com.vynora.playback.PlaybackSnapshot
+import com.vynora.youtube.YouTubeHomeScreen
+import com.vynora.youtube.YouTubeItem
+import com.vynora.youtube.YouTubeViewModel
+import com.vynora.youtube.YouTubeWatchScreen
 
 @UnstableApi
 class MainActivity : ComponentActivity() {
     private lateinit var playbackController: PlaybackController
     private val libraryViewModel: LibraryViewModel by viewModels()
+    private val youTubeViewModel: YouTubeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,7 +99,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             VynoraApp(
                 playbackController = playbackController,
-                libraryViewModel = libraryViewModel
+                libraryViewModel = libraryViewModel,
+                youTubeViewModel = youTubeViewModel
             )
         }
     }
@@ -109,13 +115,16 @@ class MainActivity : ComponentActivity() {
 @androidx.compose.runtime.Composable
 private fun VynoraApp(
     playbackController: PlaybackController,
-    libraryViewModel: LibraryViewModel
+    libraryViewModel: LibraryViewModel,
+    youTubeViewModel: YouTubeViewModel
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val tracks by libraryViewModel.tracks.collectAsStateWithLifecycle()
     val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
     val isScanning by libraryViewModel.isScanning.collectAsStateWithLifecycle()
     val scanError by libraryViewModel.scanError.collectAsStateWithLifecycle()
+    val youTubeState by youTubeViewModel.state.collectAsStateWithLifecycle()
+    var selectedYouTubeItem by remember { mutableStateOf<YouTubeItem?>(null) }
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -136,6 +145,8 @@ private fun VynoraApp(
         hasPermission = granted
         if (granted) libraryViewModel.refreshLibrary()
     }
+
+    LaunchedEffect(Unit) { youTubeViewModel.loadHome() }
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) libraryViewModel.refreshLibrary()
@@ -169,15 +180,16 @@ private fun VynoraApp(
             },
             bottomBar = {
                 Column {
-                    if (snapshot.title != "Nothing playing" && snapshot.title != "Player unavailable") {
-                        MiniPlayer(snapshot, playbackController, onOpen = { selectedTab = 3 })
+                    if (selectedTab != 5 && snapshot.title != "Nothing playing" && snapshot.title != "Player unavailable") {
+                        MiniPlayer(snapshot, playbackController, onOpen = { selectedTab = 4 })
                     }
                     NavigationBar(containerColor = Color(0xFF171421)) {
                         val tabs = listOf(
+                            "Home" to Icons.Rounded.Search,
                             "Library" to Icons.Rounded.LibraryMusic,
                             "Favorites" to Icons.Rounded.Favorite,
                             "Playlists" to Icons.Rounded.QueueMusic,
-                            "Player" to Icons.Rounded.GraphicEq
+                            "Local player" to Icons.Rounded.GraphicEq
                         )
                         tabs.forEachIndexed { index, pair ->
                             NavigationBarItem(
@@ -192,7 +204,18 @@ private fun VynoraApp(
             }
         ) { padding ->
             when (selectedTab) {
-                0 -> LibraryScreen(
+                0 -> YouTubeHomeScreen(
+                    state = youTubeState,
+                    onSearchVideos = youTubeViewModel::searchVideos,
+                    onSearchPlaylists = youTubeViewModel::searchPlaylists,
+                    onOpen = { item ->
+                        if (snapshot.isPlaying) playbackController.togglePlayback()
+                        selectedYouTubeItem = item
+                        selectedTab = 5
+                    },
+                    modifier = Modifier.padding(padding)
+                )
+                1 -> LibraryScreen(
                     modifier = Modifier.padding(padding),
                     tracks = tracks,
                     query = query,
@@ -205,7 +228,7 @@ private fun VynoraApp(
                     onRescan = libraryViewModel::refreshLibrary,
                     onFavorite = libraryViewModel::setFavorite
                 )
-                1 -> TrackCollectionScreen(
+                2 -> TrackCollectionScreen(
                     modifier = Modifier.padding(padding),
                     title = "Your favorites",
                     subtitle = "${favorites.size} saved songs",
@@ -213,15 +236,28 @@ private fun VynoraApp(
                     onPlay = { index -> playbackController.playQueue(favorites, index) },
                     onFavorite = { track -> libraryViewModel.setFavorite(track, false) }
                 )
-                2 -> PlaylistsScreen(
+                3 -> PlaylistsScreen(
                     modifier = Modifier.padding(padding),
                     libraryViewModel = libraryViewModel,
                     playbackController = playbackController
                 )
-                else -> NowPlayingScreen(
+                4 -> NowPlayingScreen(
                     modifier = Modifier.padding(padding),
                     snapshot = snapshot,
                     controller = playbackController
+                )
+                else -> selectedYouTubeItem?.let { item ->
+                    YouTubeWatchScreen(
+                        item = item,
+                        onBack = { selectedYouTubeItem = null; selectedTab = 0 },
+                        modifier = Modifier.padding(padding)
+                    )
+                } ?: YouTubeHomeScreen(
+                    state = youTubeState,
+                    onSearchVideos = youTubeViewModel::searchVideos,
+                    onSearchPlaylists = youTubeViewModel::searchPlaylists,
+                    onOpen = { item -> selectedYouTubeItem = item; selectedTab = 5 },
+                    modifier = Modifier.padding(padding)
                 )
             }
         }
