@@ -18,6 +18,25 @@ Vynora is an offline-first Android music player focused on a clean native experi
 
 > Real-device screenshots will be added here after capture and verification on a physical Android device. No concept renders or mockups are presented as application screenshots.
 
+## Online music discovery
+
+Vynora can discover public YouTube music videos and playlists through the YouTube Data API and play selected content in the official embedded YouTube player. Local device music remains available through the native Media3 player.
+
+YouTube playback is subject to YouTube's developer policies: the app does not extract audio, download/cache YouTube media, or provide YouTube background/miniplayer audio. The embedded player remains visible while YouTube content is playing. Background playback and offline playback apply only to music files already stored on the device.
+
+### Configure YouTube API access
+
+1. Enable YouTube Data API v3 in a Google Cloud project and create an API key.
+2. Restrict the key to the YouTube Data API and, where practical, the Android app package/signing certificate.
+3. Add this line to your untracked root `local.properties` file:
+
+```properties
+YOUTUBE_API_KEY=your_api_key
+```
+
+4. For CI/release builds, add a GitHub Actions repository secret named `YOUTUBE_API_KEY`. Never commit the key.
+
+The app builds without a key, but online discovery displays setup guidance until one is configured.
 ## Features
 
 | Area | Current implementation |

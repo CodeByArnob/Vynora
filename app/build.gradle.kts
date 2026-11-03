@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
  id("com.android.application")
  id("org.jetbrains.kotlin.android")
@@ -5,10 +7,18 @@ plugins {
  id("com.google.devtools.ksp")
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) localPropertiesFile.inputStream().use(localProperties::load)
+val youtubeApiKey = (System.getenv("YOUTUBE_API_KEY") ?: localProperties.getProperty("YOUTUBE_API_KEY") ?: "")
+    .replace("\\", "\\\\").replace("\"", "\\\"")
+
+
 android {
  namespace = "com.vynora"
  compileSdk = 36
  defaultConfig {
+  buildConfigField("String", "YOUTUBE_API_KEY", "\"$youtubeApiKey\"")
   applicationId = "com.vynora"
   minSdk = 26
   targetSdk = 36
@@ -16,7 +26,7 @@ android {
   versionName = "0.2.0"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
  }
- buildFeatures { compose = true }
+ buildFeatures { compose = true; buildConfig = true }
  compileOptions {
   sourceCompatibility = JavaVersion.VERSION_17
   targetCompatibility = JavaVersion.VERSION_17
@@ -32,6 +42,7 @@ dependencies {
  implementation(composeBom)
  androidTestImplementation(composeBom)
  implementation("androidx.core:core-ktx:1.17.0")
+ implementation("io.coil-kt:coil-compose:2.7.0")
  implementation("androidx.activity:activity-compose:1.10.1")
  implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
  implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
