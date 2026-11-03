@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vynora — Native Android Music Player &amp; Keyless Audius Streaming</title>
-  <meta name="description" content="Open-source native Android music player crafted with Jetpack Compose, AndroidX Media3 ExoPlayer, and decentralized keyless Audius streaming. Zero API keys. Real-time 28-band bass visualizer." />
-  <meta name="keywords" content="Vynora, Android Music Player, Jetpack Compose, Media3 ExoPlayer, Audius, Music Streaming, Audio Visualizer, Open Source, Material 3" />
+  <title>Vynora — Native Android Music Engine &amp; Keyless Audius Streaming</title>
+  <meta name="description" content="Production-grade native Android music player engineered with Jetpack Compose, AndroidX Media3 ExoPlayer, decentralized Audius streaming, and universal 28-band hardware FFT audio visualizer." />
+  <meta name="keywords" content="Vynora, Android Music Player, Jetpack Compose, Media3 ExoPlayer, Audius, Music Streaming, Audio Visualizer, Open Source, Material 3, Android Architecture" />
   <meta name="author" content="CodeByArnob" />
 
   <!-- Open Graph / Social Meta -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Vynora — Native Android Music Player &amp; Audius Streaming" />
-  <meta property="og:description" content="Decentralized Audius streaming, offline MediaStore player, and real-time 28-band hardware FFT audio visualizer." />
+  <meta property="og:title" content="Vynora — Native Android Music Engine" />
+  <meta property="og:description" content="Decentralized keyless Audius streaming, offline MediaStore engine, and real-time 28-band hardware FFT audio visualizer." />
   <meta property="og:image" content="assets/vynora_icon.png" />
   <meta property="og:url" content="https://codebyarnob.github.io/Vynora/" />
 
@@ -40,10 +40,11 @@
 
       <nav>
         <ul class="nav-links">
-          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#capabilities" class="nav-link">Capabilities</a></li>
           <li><a href="#visualizer" class="nav-link">Visualizer</a></li>
-          <li><a href="#showcase" class="nav-link">Showcase</a></li>
+          <li><a href="#showcase" class="nav-link">Screenshots</a></li>
           <li><a href="#architecture" class="nav-link">Architecture</a></li>
+          <li><a href="#roadmap" class="nav-link">Contribute</a></li>
           <li><a href="#specs" class="nav-link">Tech Specs</a></li>
           <li><a href="#download" class="nav-link">Download</a></li>
         </ul>
@@ -66,21 +67,21 @@
     </div>
   </header>
 
-  <!-- ==================== HERO SECTION ==================== -->
+  <!-- ==================== HERO SECTION WITH REAL SCREENSHOTS ==================== -->
   <section id="hero" class="hero">
     <div class="container">
       <div class="hero-pill">
         <span class="hero-pill-badge">PRODUCTION RELEASE</span>
-        <span>v0.8.0 · 100% Keyless Audius &amp; MediaStore Offline</span>
+        <span>v0.8.0 · Keyless Audius &amp; Offline MediaStore</span>
       </div>
 
       <h1 class="hero-title">
-        Pure Native Sound.<br />
-        <span class="gradient-text">Decentralized &amp; Unchained.</span>
+        High-Performance Native Android<br />
+        <span class="gradient-text">Audio Engine &amp; Streaming Architecture</span>
       </h1>
 
       <p class="hero-subtitle">
-        Vynora is a high-performance Android music player built with Jetpack Compose, AndroidX Media3 ExoPlayer, and decentralized Audius streaming. Zero API keys. Instant offline playback. Hardware-accelerated 28-band bass-reactive audio visualizer.
+        Engineered with Jetpack Compose, AndroidX Media3 ExoPlayer, and decentralized Audius streaming. Zero API keys. Instant offline playback. Hardware-accelerated 28-band bass-reactive audio visualizer.
       </p>
 
       <div class="hero-buttons">
@@ -93,10 +94,10 @@
           <span>Download APK (v0.8.0) · 26.9 MB</span>
         </a>
         <a href="#showcase" class="btn btn-secondary btn-lg">
-          <span>Explore Screenshots</span>
+          <span>Inspect Real Screenshots</span>
         </a>
-        <a href="https://github.com/CodeByArnob/Vynora" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
-          <span>View Source Code</span>
+        <a href="#roadmap" class="btn btn-secondary btn-lg">
+          <span>Contributor Roadmap</span>
         </a>
       </div>
 
@@ -104,7 +105,7 @@
       <div class="hero-stats">
         <div class="stat-item">
           <div class="stat-value">28</div>
-          <div class="stat-label">FFT Frequency Bands</div>
+          <div class="stat-label">Hardware FFT Bands</div>
         </div>
         <div class="stat-item">
           <div class="stat-value">256 <span style="font-size: 1rem; color: #1ED760;">MB</span></div>
@@ -120,10 +121,104 @@
         </div>
       </div>
 
-      <!-- Hero Visual Vector Showcase -->
-      <div class="hero-visual">
-        <div class="hero-visual-card">
-          <img src="assets/vynora-hero-motion.svg" alt="Vynora Architecture &amp; UI Banner" loading="lazy" />
+      <!-- Real In-App Mobile Device Showcase (NO FAKE SVGs) -->
+      <div class="hero-phones-container">
+        <!-- Left: Discovery Home -->
+        <div class="hero-phone-side">
+          <img src="assets/screenshots/screenshot_home.jpg" alt="Vynora Home Screen with Indian Music &amp; Audius Trends" loading="lazy" />
+        </div>
+
+        <!-- Center: Fullscreen Now Playing with 28-band FFT & Amber Glow -->
+        <div class="hero-phone-center">
+          <img src="assets/screenshots/screenshot_now_playing.jpg" alt="Vynora Now Playing Screen with 28-Band Hardware FFT Visualizer" />
+        </div>
+
+        <!-- Right: Offline MediaStore Library -->
+        <div class="hero-phone-side">
+          <img src="assets/screenshots/screenshot_library.jpg" alt="Vynora Local Library Screen with 45 device tracks" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CAPABILITIES & SENIOR ARCHITECTURE ==================== -->
+  <section id="capabilities" class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ENGINEERING CAPABILITIES</span>
+        <h2 class="section-title">
+          Production Architecture &amp; Subsystems
+        </h2>
+        <p class="section-subtitle">
+          Built according to Android Modern App Architecture standards with strict separation of concerns, resilient caching, and low-latency audio processing.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Capability 1: Decentralized Audius Network -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-audius">
+            🌐
+          </div>
+          <h3 class="feature-title">100% Keyless Audius Discovery</h3>
+          <p class="feature-desc">
+            Direct integration with decentralized Audius validator nodes via <code style="color: #F472B6;">api.audius.co</code>. Implements dynamic host health consensus, round-robin connection pooling, HTTP 302 redirect resolution, and typo-tolerant search indexing without rate limits or API key mandates.
+          </p>
+        </div>
+
+        <!-- Capability 2: 28-Band Hardware FFT -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-amber">
+            🎛️
+          </div>
+          <h3 class="feature-title">28-Band Hardware FFT Visualizer</h3>
+          <p class="feature-desc">
+            Attaches directly to ExoPlayer's <code style="color: #FBBF24;">audioSessionId</code> via <code style="color: #FBBF24;">android.media.audiofx.Visualizer</code>. Extracts real and imaginary Fourier components into 28 logarithmic frequency bins (20Hz–20kHz) with gravitational decay physics on floating peak dots and dynamic album-art ambient backlighting.
+          </p>
+        </div>
+
+        <!-- Capability 3: Offline MediaStore Engine -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-green">
+            📁
+          </div>
+          <h3 class="feature-title">Universal Local MediaStore Engine</h3>
+          <p class="feature-desc">
+            Asynchronous background indexing of local audio files (MP3, 24-bit FLAC, WAV, M4A, OGG) via Android's <code style="color: #1ED760;">ContentResolver</code> on <code style="color: #1ED760;">Dispatchers.IO</code>. In-memory search filtering with zero UI thread contention, backed by Room SQLite for favorites and playlists.
+          </p>
+        </div>
+
+        <!-- Capability 4: Media3 256MB LRU Cache -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-green">
+            ⚡
+          </div>
+          <h3 class="feature-title">256MB Media3 LRU Caching</h3>
+          <p class="feature-desc">
+            High-efficiency playback pipeline powered by AndroidX Media3 <code style="color: #1ED760;">SimpleCache</code> and <code style="color: #1ED760;">LeastRecentlyUsedCacheEvictor</code>. Prefetches upcoming queue audio chunks to deliver instantaneous next/previous track transitions without redundant network transfer.
+          </p>
+        </div>
+
+        <!-- Capability 5: Resilient Background Service -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-amber">
+            🛡️
+          </div>
+          <h3 class="feature-title">Foreground MediaSessionService</h3>
+          <p class="feature-desc">
+            <code style="color: #FBBF24;">VynoraPlaybackService</code> guarantees uninterrupted background audio during process suspension, screen lock, and system memory pressure. Implements audio focus arbitration, notification playback controls, and automatic halt on headset disconnect.
+          </p>
+        </div>
+
+        <!-- Capability 6: Material 3 UDF Architecture -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-audius">
+            🎨
+          </div>
+          <h3 class="feature-title">Declarative Jetpack Compose UI</h3>
+          <p class="feature-desc">
+            Unidirectional Data Flow (UDF) with immutable <code style="color: #F472B6;">UiState</code> contracts collected via <code style="color: #F472B6;">collectAsStateWithLifecycle</code>. Features an edge-to-edge dark theme, docked persistent miniplayer, dynamic artwork color palette extraction, and a custom sleep timer modal.
+          </p>
         </div>
       </div>
     </div>
@@ -138,7 +233,7 @@
           Universal <span class="gradient-text-amber">28-Band Hardware FFT</span> Spectrum
         </h2>
         <p class="section-subtitle">
-          Vynora hooks directly into AndroidX Media3 ExoPlayer’s raw audio session ID. Experience physics-based peak dots, logarithmic frequency mapping, and dynamic amber album-art illumination.
+          Experience physics-based peak hold decay, logarithmic frequency binning, and dynamic amber album-art illumination running in real time.
         </p>
       </div>
 
@@ -173,16 +268,16 @@
     </div>
   </section>
 
-  <!-- ==================== SCREENSHOT SHOWCASE SECTION ==================== -->
+  <!-- ==================== AUTHENTIC SCREENSHOT GALLERY ==================== -->
   <section id="showcase" class="showcase-section">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">AUTHENTIC APP GALLERY</span>
+        <span class="section-tag">AUTHENTIC APPLICATION GALLERY</span>
         <h2 class="section-title">
-          Crafted for Android <span class="gradient-text">Material 3</span>
+          Real Device Interface <span class="gradient-text">In Action</span>
         </h2>
         <p class="section-subtitle">
-          Real in-app captures recorded directly on Android 16 (API 36) showcasing the production interface in action.
+          Unfiltered captures recorded on Android 16 (API 36) showcasing the production interface.
         </p>
       </div>
 
@@ -247,111 +342,197 @@
     </div>
   </section>
 
-  <!-- ==================== CORE FEATURES GRID ==================== -->
-  <section id="features" class="features-section">
+  <!-- ==================== ARCHITECTURE STACK ==================== -->
+  <section id="architecture" class="architecture-section">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">ENGINEERED FOR EXCELLENCE</span>
+        <span class="section-tag">CLEAN ARCHITECTURE</span>
         <h2 class="section-title">
-          Everything an Audiophile Needs
+          Layered System Architecture
         </h2>
         <p class="section-subtitle">
-          From decentralized blockchain audio nodes to local offline FLAC decoding, Vynora is engineered with zero compromises.
+          Clean separation between presentation, state orchestration, domain repositories, and the native audio engine.
         </p>
       </div>
 
-      <div class="features-grid">
-        <!-- Feature 1: Audius Keyless Streaming -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-audius">
-            🌐
+      <div class="arch-layers-stack">
+        <!-- Layer 1 -->
+        <div class="arch-layer-card">
+          <div class="arch-layer-header">
+            <div class="arch-layer-title">
+              <span style="color: #4285F4;">●</span> 1. Presentation Layer (Jetpack Compose &amp; Material 3)
+            </div>
+            <span class="arch-layer-badge" style="background: rgba(66, 133, 244, 0.15); color: #60A5FA;">UI &amp; Canvas</span>
           </div>
-          <h3 class="feature-title">100% Keyless Audius Discovery</h3>
-          <p class="feature-desc">
-            Stream millions of tracks directly from decentralized Audius validator nodes. Dynamic host resolution queries live endpoints with automatic fallback. Zero API keys, zero quota throttling, and zero subscription walls.
-          </p>
+          <div class="arch-layer-chips">
+            <span class="arch-chip">HomeScreen.kt</span>
+            <span class="arch-chip">NowPlayingScreen.kt</span>
+            <span class="arch-chip">ExploreScreen.kt</span>
+            <span class="arch-chip">LibraryScreen.kt</span>
+            <span class="arch-chip">AudioVisualizerView.kt (28-Band FFT)</span>
+            <span class="arch-chip">MiniPlayer.kt</span>
+          </div>
         </div>
 
-        <!-- Feature 2: Hardware FFT Visualizer -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-amber">
-            🎛️
+        <!-- Layer 2 -->
+        <div class="arch-layer-card">
+          <div class="arch-layer-header">
+            <div class="arch-layer-title">
+              <span style="color: #A855F7;">●</span> 2. Reactive State &amp; ViewModel Layer (Kotlin Flow &amp; Coroutines)
+            </div>
+            <span class="arch-layer-badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC;">StateFlow / UDF</span>
           </div>
-          <h3 class="feature-title">28-Band Hardware Visualizer</h3>
-          <p class="feature-desc">
-            Native Android Visualizer API hooked into the ExoPlayer audio session. 28 logarithmic frequency bins from 20Hz sub-bass to 20kHz highs, with physics-based gravity decay on floating peak hold dots.
-          </p>
+          <div class="arch-layer-chips">
+            <span class="arch-chip">AudiusViewModel.kt</span>
+            <span class="arch-chip">LocalAudioViewModel.kt</span>
+            <span class="arch-chip">PlayerViewModel.kt</span>
+            <span class="arch-chip">PlaybackController.kt</span>
+          </div>
         </div>
 
-        <!-- Feature 3: Offline MediaStore -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-green">
-            📁
+        <!-- Layer 3 -->
+        <div class="arch-layer-card">
+          <div class="arch-layer-header">
+            <div class="arch-layer-title">
+              <span style="color: #10B981;">●</span> 3. Domain &amp; Repository Layer
+            </div>
+            <span class="arch-layer-badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">Business Logic</span>
           </div>
-          <h3 class="feature-title">Universal Offline Player</h3>
-          <p class="feature-desc">
-            Direct integration with the Android MediaStore content resolver. Instantly indexes MP3, FLAC, WAV, M4A, and OGG audio on device storage with zero-lag search filtering. Room SQLite persists playlists and favorites.
-          </p>
+          <div class="arch-layer-chips">
+            <span class="arch-chip">AudiusRepository.kt</span>
+            <span class="arch-chip">AudiusSearchEngine.kt (Phonetic Index)</span>
+            <span class="arch-chip">LocalAudioRepository.kt</span>
+            <span class="arch-chip">AppDatabase.kt (Room SQLite)</span>
+          </div>
         </div>
 
-        <!-- Feature 4: Media3 256MB LRU Cache -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-green">
-            ⚡
+        <!-- Layer 4 -->
+        <div class="arch-layer-card">
+          <div class="arch-layer-header">
+            <div class="arch-layer-title">
+              <span style="color: #F59E0B;">●</span> 4. Audio Playback Engine (AndroidX Media3 ExoPlayer)
+            </div>
+            <span class="arch-layer-badge" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">Low-Latency Audio</span>
           </div>
-          <h3 class="feature-title">256MB Resilient Audio Cache</h3>
-          <p class="feature-desc">
-            Built on AndroidX Media3 SimpleCache and LeastRecentlyUsedCacheEvictor. Automatically prebuffers upcoming tracks in queue for instantaneous, gapless next/previous track transitions without mobile data waste.
-          </p>
+          <div class="arch-layer-chips">
+            <span class="arch-chip">VynoraPlaybackService.kt (MediaSessionService)</span>
+            <span class="arch-chip">MediaCacheManager.kt (256MB SimpleCache LRU)</span>
+            <span class="arch-chip">VisualizerController.kt (Hardware FFT)</span>
+            <span class="arch-chip">SleepTimerManager.kt</span>
+          </div>
         </div>
 
-        <!-- Feature 5: Material 3 Theming -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-audius">
-            🎨
+        <!-- Layer 5 -->
+        <div class="arch-layer-card">
+          <div class="arch-layer-header">
+            <div class="arch-layer-title">
+              <span style="color: #EC4899;">●</span> 5. External Providers &amp; Storage Subsystems
+            </div>
+            <span class="arch-layer-badge" style="background: rgba(236, 72, 153, 0.15); color: #F472B6;">Data Sources</span>
           </div>
-          <h3 class="feature-title">Material 3 Dynamic Glow</h3>
-          <p class="feature-desc">
-            Dynamic ambient backlight extracted directly from the active album cover palette. Persistent docked miniplayer with edge-to-edge Compose rendering and smooth modal bottom sheets.
-          </p>
-        </div>
-
-        <!-- Feature 6: Background Continuity -->
-        <div class="feature-card">
-          <div class="feature-icon-wrapper feature-icon-amber">
-            🛡️
+          <div class="arch-layer-chips">
+            <span class="arch-chip">Audius Decentralized Network (Keyless REST v1)</span>
+            <span class="arch-chip">Android MediaStore ContentProvider (API 26–36)</span>
           </div>
-          <h3 class="feature-title">Resilient Background Service</h3>
-          <p class="feature-desc">
-            VynoraPlaybackService implements AndroidX MediaSessionService. Flawless audio playback during screen lock, app minimization, incoming call audio focus shifts, and wireless Bluetooth headset unplugging.
-          </p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ==================== ARCHITECTURE SECTION ==================== -->
-  <section id="architecture" class="architecture-section">
+  <!-- ==================== CONTRIBUTOR ROADMAP SECTION ==================== -->
+  <section id="roadmap" class="features-section" style="background: var(--bg-secondary);">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">MODERN CLEAN ARCHITECTURE</span>
+        <span class="section-tag">OPEN SOURCE ADVANCEMENT</span>
         <h2 class="section-title">
-          Robust, Scalable &amp; Decoupled
+          Contributor Technical Roadmap
         </h2>
         <p class="section-subtitle">
-          Clean MVVM separation with Kotlin 2.1 Coroutines, StateFlow, AndroidX Media3 ExoPlayer, and decentralized network services.
+          Architectural extension points for senior developers to contribute and advance the Vynora platform.
         </p>
       </div>
 
-      <div class="arch-card">
-        <div class="arch-img-wrapper">
-          <img src="assets/vynora-architecture-motion.svg" alt="Vynora Clean Architecture &amp; Audio Pipeline" loading="lazy" />
+      <div class="roadmap-grid">
+        <!-- Roadmap 1: Parametric DSP & Equalizer -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">Audio DSP Subsystem</span>
+          <h3 class="roadmap-title">10-Band Graphic Equalizer &amp; DSP</h3>
+          <p class="roadmap-desc">
+            Extend <code style="color: #FBBF24;">VynoraPlaybackService</code> by instantiating <code style="color: #FBBF24;">android.media.audiofx.Equalizer</code>, <code style="color: #FBBF24;">BassBoost</code>, and <code style="color: #FBBF24;">Virtualizer</code> hooked to the active audio session ID.
+          </p>
+          <ul class="roadmap-points">
+            <li>Expose band frequency ranges (60Hz to 14kHz) with &plusmn;12dB gain sliders.</li>
+            <li>Implement custom Room SQLite entity for saving custom user EQ curves.</li>
+            <li>Add hardware-accelerated preset curves (Acoustic, Electronic, Rock, Vocal).</li>
+          </ul>
         </div>
 
-        <div style="text-align: center; margin-top: 24px;">
-          <a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
-            <span>Read Complete Architecture Whitepaper</span>
-          </a>
+        <!-- Roadmap 2: Offline Download Manager -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(30, 215, 96, 0.15); color: #1ED760;">Storage &amp; Media3</span>
+          <h3 class="roadmap-title">Permanent Offline Download Manager</h3>
+          <p class="roadmap-desc">
+            Implement <code style="color: #1ED760;">androidx.media3.exoplayer.offline.DownloadManager</code> and a foreground <code style="color: #1ED760;">DownloadService</code> to enable permanent offline caching of Audius streams.
+          </p>
+          <ul class="roadmap-points">
+            <li>Store encrypted audio chunks in scoped external storage.</li>
+            <li>Maintain download progress, pause/resume, and storage quota management.</li>
+            <li>Seamless fallback to local chunk playback when network is disconnected.</li>
+          </ul>
+        </div>
+
+        <!-- Roadmap 3: Synchronized LRC Lyrics -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(204, 51, 153, 0.15); color: #F472B6;">Interactive UI</span>
+          <h3 class="roadmap-title">Synchronized LRC Lyrics Engine</h3>
+          <p class="roadmap-desc">
+            Build a timestamped <code style="color: #F472B6;">.lrc</code> parser hooked to a free lyrics API (such as LRCLIB) to render synchronized karaoke-style lyrics on the Now Playing screen.
+          </p>
+          <ul class="roadmap-points">
+            <li>Parse standard timestamp tags (<code style="color: #F472B6;">[mm:ss.xx]</code>) into an indexed timeline.</li>
+            <li>Auto-scroll the active line in Jetpack Compose using <code style="color: #F472B6;">animateScrollToItem</code>.</li>
+            <li>Allow users to tap on any lyric line to instantly seek audio position.</li>
+          </ul>
+        </div>
+
+        <!-- Roadmap 4: Audius Web3 Authentication -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(66, 133, 244, 0.15); color: #60A5FA;">Web3 &amp; Identity</span>
+          <h3 class="roadmap-title">Audius OAuth2 &amp; Cloud Sync</h3>
+          <p class="roadmap-desc">
+            Integrate Audius OAuth2 authentication to let users log in with their Audius account, syncing remote favorites and custom playlists with the blockchain.
+          </p>
+          <ul class="roadmap-points">
+            <li>Chrome Custom Tabs OAuth2 login flow.</li>
+            <li>Bi-directional synchronization between Room SQLite and remote Audius playlists.</li>
+            <li>Follow artists, like tracks, and repost tracks directly from the app.</li>
+          </ul>
+        </div>
+
+        <!-- Roadmap 5: Android Auto & TV -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">Multi-Device</span>
+          <h3 class="roadmap-title">Android Auto &amp; Wear OS Companions</h3>
+          <p class="roadmap-desc">
+            Implement <code style="color: #34D399;">MediaLibraryService.MediaLibrarySessionCallback</code> to expose Vynora's media hierarchy to automobile dashboards and smartwatches.
+          </p>
+          <ul class="roadmap-points">
+            <li>Support root node browsing for Trending, Favorites, and Local MediaStore.</li>
+            <li>Rotary dial navigation and optimized high-contrast automotive UI.</li>
+          </ul>
+        </div>
+
+        <!-- Roadmap 6: Audio Profiling & Benchmarking -->
+        <div class="roadmap-card">
+          <span class="roadmap-badge" style="background: rgba(236, 72, 153, 0.15); color: #F472B6;">Performance</span>
+          <h3 class="roadmap-title">Audio Jitter &amp; Perfetto Profiling</h3>
+          <p class="roadmap-desc">
+            Add custom Perfetto trace markers across the ExoPlayer render loop, buffer chunk allocation, and Visualizer FFT transforms to ensure zero audio underruns.
+          </p>
+          <ul class="roadmap-points">
+            <li>Measure chunk decode latency on low-end ARM Cortex-A53 cores.</li>
+            <li>Benchmark memory allocations to ensure zero garbage collection pauses during playback.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -518,7 +699,7 @@
             <span>Vynora</span>
           </div>
           <p class="footer-brand-desc">
-            Open-source native Android music player combining decentralized Audius streaming with local offline MediaStore audio playback and real-time hardware FFT visualization.
+            Open-source native Android music engine combining decentralized Audius streaming with local offline MediaStore playback and real-time hardware FFT audio visualization.
           </p>
         </div>
 
@@ -526,7 +707,7 @@
           <div class="footer-col">
             <h4>Product</h4>
             <ul>
-              <li><a href="#features">Features</a></li>
+              <li><a href="#capabilities">Capabilities</a></li>
               <li><a href="#visualizer">Hardware FFT</a></li>
               <li><a href="#showcase">Screenshots</a></li>
               <li><a href="#download">Download APK</a></li>
@@ -536,9 +717,9 @@
             <h4>Architecture</h4>
             <ul>
               <li><a href="#architecture">Clean MVVM</a></li>
+              <li><a href="#roadmap">Contributor Roadmap</a></li>
               <li><a href="#specs">Tech Stack</a></li>
-              <li><a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/AUDIUS_INTEGRATION.md" target="_blank" rel="noopener noreferrer">Audius Pipeline</a></li>
-              <li><a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Documentation</a></li>
+              <li><a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Architecture Docs</a></li>
             </ul>
           </div>
           <div class="footer-col">
