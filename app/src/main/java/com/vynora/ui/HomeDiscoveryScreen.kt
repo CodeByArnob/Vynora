@@ -130,7 +130,7 @@ fun HomeDiscoveryScreen(
                     AudioTrack(
                         uri = "https://audius.co/stream/uncut_4",
                         id = 104L,
-                        title = "naadaaniyan (with Jonita Gandhi)",
+                        title = "nadaaniyan (with Jonita Gandhi)",
                         artist = "Jonita Gandhi & Akshath",
                         album = "Uncut Bollywood",
                         durationMs = 170_000L,
@@ -290,7 +290,12 @@ fun HomeDiscoveryScreen(
                     .fillMaxWidth()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color(0xFF1E1418), Color(0xFF000000))
+                            listOf(
+                                Color(0xFF4C1D27),
+                                Color(0xFF261924),
+                                Color(0xFF121622),
+                                Color(0xFF000000)
+                            )
                         )
                     )
                     .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -387,7 +392,7 @@ fun HomeDiscoveryScreen(
 
                 Spacer(Modifier.height(14.dp))
 
-                // Mood Filter Pills (Horizontal Scroll)
+                // Mood Filter Pills (Horizontal Scroll matching Screenshot 2)
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = 2.dp)
@@ -395,12 +400,15 @@ fun HomeDiscoveryScreen(
                     items(moodPills) { mood ->
                         val isSelected = selectedMood == mood
                         Surface(
-                            modifier = Modifier.clickable {
-                                selectedMood = if (isSelected) null else mood
-                                onSearchVideos("$mood songs official")
-                            },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .clickable {
+                                    selectedMood = if (isSelected) null else mood
+                                    onSearchVideos("$mood songs official")
+                                },
                             shape = RoundedCornerShape(50),
-                            color = if (isSelected) Color.White else Color(0xFF272727)
+                            color = if (isSelected) Color.White else Color(0x38FFFFFF),
+                            border = if (isSelected) null else androidx.compose.foundation.BorderStroke(0.8.dp, Color(0x22FFFFFF))
                         ) {
                             Text(
                                 text = mood,
@@ -642,50 +650,71 @@ private fun GetStartedCard(
         color = bgColor,
         shape = RoundedCornerShape(12.dp)
     ) {
-        if (!compositeImageUri.isNullOrBlank()) {
-            AsyncImage(
-                model = compositeImageUri,
-                contentDescription = title,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp)
-                        .background(Color(0xFF1E1E1E))
-                ) {
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription = title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (!compositeImageUri.isNullOrBlank()) {
+                AsyncImage(
+                    model = compositeImageUri,
+                    contentDescription = title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = Color(0xFFDDDDDD),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .background(Color(0xFF1E1E1E))
+                    ) {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            color = Color(0xFFDDDDDD),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+
+            // Small translucent play circle in top-left (Matches Image 2!)
+            Surface(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(24.dp)
+                    .align(Alignment.TopStart),
+                shape = CircleShape,
+                color = Color(0x66000000)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Rounded.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }

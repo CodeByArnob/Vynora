@@ -131,6 +131,10 @@ class YouTubeCatalogCache(private val context: Context) {
         )
 
         val seedCatalog: List<YouTubeItem> = listOf(
+            seed("N7bK8zYq9xM", "Gehra Hua (Official Video) | Arijit Singh, Armaan Khan, Shashwat Sachdev", "Sony Music India", "uncut bollywood arijit singh gehra hua official romantic", "2026-11-01T10:00:00Z"),
+            seed("8fW3r9jY1sA", "Arz Kiya Hai (Official Video) | Anuv Jain", "Anuv Jain", "anuv jain arz kiya hai indie hindi acoustic lofi chill", "2026-11-01T10:00:00Z"),
+            seed("4K8jY1sAfW3", "Barbaad (Movie: Saiyaara) | Jubin Nautiyal", "T-Series", "jubin nautiyal barbaad saiyaara official bollywood romantic", "2026-11-01T10:00:00Z"),
+            seed("1sAfW34K8jY", "nadaaniyan (with Jonita Gandhi) | Jonita Gandhi & Akshath", "Jonita Gandhi", "jonita gandhi akshath nadaaniyan pop acoustic indie", "2026-11-01T10:00:00Z"),
             seed("5Eqb_-j3FDA", "Pasoori (Official Video) | Ali Sethi x Shae Gill", "Coke Studio", "latest hindi punjabi trending official chartbuster", "2026-10-30T10:00:00Z"),
             seed("BddP6PYo2gs", "Kesariya (Official Video) | Brahmāstra | Ranbir, Alia | Pritam | Arijit Singh", "Sony Music India", "latest hindi bollywood arijit singh romantic official", "2026-10-29T10:00:00Z"),
             seed("ElZfdU54Cp8", "Apna Bana Le (Official Audio) | Bhediya | Varun Dhawan, Kriti Sanon | Sachin-Jigar, Arijit Singh", "Zee Music Company", "latest hindi bollywood arijit singh romantic official", "2026-10-28T10:00:00Z"),

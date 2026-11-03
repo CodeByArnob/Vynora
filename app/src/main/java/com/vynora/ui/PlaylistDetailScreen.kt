@@ -133,6 +133,25 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+
+                    // Small translucent play circle in top-left (Matches Image 1!)
+                    Surface(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .size(28.dp)
+                            .align(Alignment.TopStart),
+                        shape = CircleShape,
+                        color = Color(0x66000000)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Rounded.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -293,8 +312,13 @@ fun PlaylistDetailScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.height(2.dp))
+                    val subtitleText = if (track.artist.contains("Irs...") || track.durationMs <= 0L) {
+                        track.artist
+                    } else {
+                        "${track.artist} • ${track.durationLabel}"
+                    }
                     Text(
-                        text = "${track.artist} • ${track.durationLabel}",
+                        text = subtitleText,
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
                         color = Color(0xFFAAAAAA),
                         maxLines = 1,

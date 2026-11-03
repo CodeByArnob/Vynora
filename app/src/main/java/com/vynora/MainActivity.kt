@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -214,6 +215,14 @@ private fun VynoraApp(
         if (hasStoragePermission) libraryViewModel.refreshLibrary()
     }
 
+    BackHandler(enabled = selectedYouTubeItem != null || selectedPlaylistForDetail != null || selectedTab != 0) {
+        when {
+            selectedYouTubeItem != null -> selectedYouTubeItem = null
+            selectedPlaylistForDetail != null -> selectedPlaylistForDetail = null
+            selectedTab != 0 -> selectedTab = 0
+        }
+    }
+
     val currentAudioTrackFavorite = remember(snapshot.queue, snapshot.currentIndex, favorites) {
         val curr = snapshot.queue.getOrNull(snapshot.currentIndex)
         curr != null && favorites.any { it.uri == curr.uri }
@@ -239,7 +248,14 @@ private fun VynoraApp(
                         DockedMiniPlayer(
                             snapshot = snapshot,
                             controller = playbackController,
-                            onOpen = { selectedTab = 4 }
+                            onOpen = { selectedTab = 4 },
+                            onPlayDefault = {
+                                if (tracks.isNotEmpty()) {
+                                    playbackController.playQueue(tracks, 0)
+                                } else {
+                                    selectedTab = 4
+                                }
+                            }
                         )
 
                         // 2. Bottom Navigation Bar (5 tabs matching Image 1 & 2)
@@ -454,7 +470,8 @@ private fun VynoraApp(
 private fun DockedMiniPlayer(
     snapshot: PlaybackSnapshot,
     controller: PlaybackController,
-    onOpen: () -> Unit
+    onOpen: () -> Unit,
+    onPlayDefault: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -516,7 +533,14 @@ private fun DockedMiniPlayer(
             }
 
             // Play / Pause / Buffering Action
-            IconButton(onClick = controller::togglePlayback) {
+            IconButton(onClick = {
+                val isIdle = snapshot.title == "Nothing playing" || snapshot.title.isBlank()
+                if (isIdle) {
+                    onPlayDefault()
+                } else {
+                    controller.togglePlayback()
+                }
+            }) {
                 when (snapshot.status) {
                     PlaybackStatus.BUFFERING, PlaybackStatus.LOADING -> {
                         CircularProgressIndicator(
