@@ -2,9 +2,11 @@ package com.vynora.playback
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,27 +15,45 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.vynora.library.AudioTrack
 import java.util.concurrent.ExecutionException
 
+enum class PlaybackStatus {
+    IDLE,
+    LOADING,
+    BUFFERING,
+    PLAYING,
+    PAUSED,
+    ERROR
+}
+
 @Stable
 data class PlaybackSnapshot(
     val title: String = "Nothing playing",
     val artist: String = "Choose a song from your library",
+    val album: String = "",
+    val artworkUri: String? = null,
     val isPlaying: Boolean = false,
+    val status: PlaybackStatus = PlaybackStatus.IDLE,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val shuffleEnabled: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
-    val sleepTimerRemainingMs: Long? = null
+    val sleepTimerRemainingMs: Long? = null,
+    val audioSessionId: Int = 0,
+    val errorMessage: String? = null,
+    val queue: List<AudioTrack> = emptyList(),
+    val currentIndex: Int = -1
 )
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 class PlaybackController(context: Context) {
     var snapshot by mutableStateOf(PlaybackSnapshot())
         private set
@@ -45,14 +65,18 @@ class PlaybackController(context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var sleepTimerEndAt: Long? = null
     private var sleepTimerRunnable: Runnable? = null
+    private var currentQueueTracks: List<AudioTrack> = emptyList()
+    private var cachedAudioSessionId: Int = 0
+    private var activeError: String? = null
 
-    // Only tick when Media3 is actively playing audio to prevent idle UI recompositions
+    // Smooth UI progress update (every 400ms when playing)
     private val progressTicker = object : Runnable {
         override fun run() {
-            val active = controller?.isPlaying == true || sleepTimerEndAt != null
+            val player = controller
+            val active = (player?.isPlaying == true) || sleepTimerEndAt != null
             if (active) {
                 refreshSnapshot()
-                mainHandler.postDelayed(this, 1000L)
+                mainHandler.postDelayed(this, 400L)
             }
         }
     }
@@ -62,12 +86,38 @@ class PlaybackController(context: Context) {
             refreshSnapshot()
             mainHandler.removeCallbacks(progressTicker)
             if (isPlaying || sleepTimerEndAt != null) {
-                mainHandler.postDelayed(progressTicker, 1000L)
+                mainHandler.post(progressTicker)
             }
         }
 
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshSnapshot()
-        override fun onPlaybackStateChanged(playbackState: Int) = refreshSnapshot()
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_READY) {
+                activeError = null
+            }
+            refreshSnapshot()
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            activeError = null
+            refreshSnapshot()
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            val message = when (error.errorCode) {
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                    "Network connection lost. Tap retry to reconnect."
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
+                    "Audio stream unavailable (HTTP ${error.errorCodeName})."
+                PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+                PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED ->
+                    "Audio format unsupported or corrupt."
+                else -> error.localizedMessage ?: "Playback error encountered."
+            }
+            activeError = message
+            refreshSnapshot()
+        }
+
         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = refreshSnapshot()
         override fun onRepeatModeChanged(repeatMode: Int) = refreshSnapshot()
     }
@@ -77,7 +127,10 @@ class PlaybackController(context: Context) {
         controllerFuture = MediaController.Builder(appContext, token).buildAsync().also { future ->
             future.addListener({
                 try {
-                    controller = future.get().also { it.addListener(listener) }
+                    val ctrl = future.get()
+                    controller = ctrl
+                    ctrl.addListener(listener)
+                    requestAudioSessionId()
                     refreshSnapshot()
                     pendingQueue?.let { (tracks, index) ->
                         pendingQueue = null
@@ -86,7 +139,9 @@ class PlaybackController(context: Context) {
                 } catch (_: ExecutionException) {
                     snapshot = PlaybackSnapshot(
                         title = "Player unavailable",
-                        artist = "Restart the app and try again"
+                        artist = "Restart the app and try again",
+                        status = PlaybackStatus.ERROR,
+                        errorMessage = "Failed to connect to playback service."
                     )
                 } catch (_: InterruptedException) {
                     Thread.currentThread().interrupt()
@@ -95,10 +150,39 @@ class PlaybackController(context: Context) {
         }
     }
 
+    private fun requestAudioSessionId() {
+        val player = controller ?: return
+        val extras = player.sessionExtras
+        val fromExtras = extras.getInt(VynoraPlaybackService.KEY_AUDIO_SESSION_ID, 0)
+        if (fromExtras > 0) {
+            cachedAudioSessionId = fromExtras
+            return
+        }
+
+        val command = SessionCommand(VynoraPlaybackService.ACTION_GET_AUDIO_SESSION_ID, Bundle.EMPTY)
+        player.sendCustomCommand(command, Bundle.EMPTY).addListener({
+            try {
+                val result = player.sendCustomCommand(command, Bundle.EMPTY).get()
+                val id = result.extras.getInt(VynoraPlaybackService.KEY_AUDIO_SESSION_ID, 0)
+                if (id > 0) {
+                    cachedAudioSessionId = id
+                    refreshSnapshot()
+                }
+            } catch (_: Exception) {}
+        }, ContextCompat.getMainExecutor(appContext))
+    }
+
     fun playQueue(tracks: List<AudioTrack>, startIndex: Int) {
         if (tracks.isEmpty() || startIndex !in tracks.indices) return
+        activeError = null
         if (controller == null) {
             pendingQueue = tracks to startIndex
+            currentQueueTracks = tracks
+            snapshot = snapshot.copy(
+                status = PlaybackStatus.LOADING,
+                queue = tracks,
+                currentIndex = startIndex
+            )
             return
         }
         startQueue(tracks, startIndex)
@@ -106,8 +190,24 @@ class PlaybackController(context: Context) {
 
     private fun startQueue(tracks: List<AudioTrack>, startIndex: Int) {
         val player = controller ?: return
+        currentQueueTracks = tracks
+
+        // Optimization: If the current playlist is identical, seek directly without recreating queue items
+        val sameQueue = player.mediaItemCount == tracks.size &&
+            player.mediaItemCount > 0 &&
+            (0 until player.mediaItemCount).all { i ->
+                player.getMediaItemAt(i).mediaId == tracks[i].uri
+            }
+
+        if (sameQueue) {
+            player.seekToDefaultPosition(startIndex)
+            player.play()
+            refreshSnapshot()
+            return
+        }
+
         val items = tracks.map { track ->
-            MediaItem.Builder()
+            val builder = MediaItem.Builder()
                 .setMediaId(track.uri)
                 .setUri(track.uri.toUri())
                 .setMediaMetadata(
@@ -115,29 +215,78 @@ class PlaybackController(context: Context) {
                         .setTitle(track.title)
                         .setArtist(track.artist)
                         .setAlbumTitle(track.album)
+                        .apply {
+                            val art = track.artworkUri ?: track.albumArtUri
+                            if (art.isNotBlank()) {
+                                setArtworkUri(art.toUri())
+                            }
+                        }
                         .build()
                 )
-                .build()
+            builder.build()
         }
+
         player.setMediaItems(items, startIndex, 0L)
         player.prepare()
         player.play()
+        requestAudioSessionId()
+        refreshSnapshot()
+    }
+
+    fun playTrackAt(index: Int) {
+        val player = controller ?: return
+        if (index in 0 until player.mediaItemCount) {
+            player.seekToDefaultPosition(index)
+            player.play()
+            refreshSnapshot()
+        } else if (index in currentQueueTracks.indices) {
+            startQueue(currentQueueTracks, index)
+        }
+    }
+
+    fun retry() {
+        val player = controller ?: return
+        activeError = null
+        player.prepare()
+        player.play()
+        refreshSnapshot()
     }
 
     fun pause() {
         controller?.pause()
     }
 
+    fun play() {
+        activeError = null
+        controller?.play()
+    }
+
     fun togglePlayback() {
-        controller?.let { if (it.isPlaying) it.pause() else it.play() }
+        val player = controller ?: return
+        activeError = null
+        if (player.isPlaying) player.pause() else player.play()
     }
 
     fun skipNext() {
-        controller?.seekToNextMediaItem()
+        val player = controller ?: return
+        activeError = null
+        if (player.hasNextMediaItem()) {
+            player.seekToNextMediaItem()
+        } else if (player.mediaItemCount > 0) {
+            player.seekToDefaultPosition(0)
+        }
     }
 
     fun skipPrevious() {
-        controller?.seekToPreviousMediaItem()
+        val player = controller ?: return
+        activeError = null
+        if (player.currentPosition > 3_000L) {
+            player.seekTo(0L)
+        } else if (player.hasPreviousMediaItem()) {
+            player.seekToPreviousMediaItem()
+        } else if (player.mediaItemCount > 0) {
+            player.seekToDefaultPosition(player.mediaItemCount - 1)
+        }
     }
 
     fun seekTo(positionMs: Long) {
@@ -186,18 +335,61 @@ class PlaybackController(context: Context) {
     }
 
     private fun refreshSnapshot() {
-        val player = controller ?: return
+        val player = controller
+        if (player == null) {
+            if (pendingQueue != null) {
+                snapshot = snapshot.copy(status = PlaybackStatus.LOADING)
+            }
+            return
+        }
+
         val metadata = player.mediaMetadata
+        val playbackState = player.playbackState
+        val isPlaying = player.isPlaying
+
+        val status = when {
+            activeError != null -> PlaybackStatus.ERROR
+            playbackState == Player.STATE_BUFFERING -> PlaybackStatus.BUFFERING
+            playbackState == Player.STATE_IDLE && player.mediaItemCount == 0 -> PlaybackStatus.IDLE
+            playbackState == Player.STATE_IDLE && activeError != null -> PlaybackStatus.ERROR
+            isPlaying -> PlaybackStatus.PLAYING
+            playbackState == Player.STATE_READY -> PlaybackStatus.PAUSED
+            playbackState == Player.STATE_ENDED -> PlaybackStatus.IDLE
+            else -> PlaybackStatus.IDLE
+        }
+
+        val currentIdx = player.currentMediaItemIndex
+
+        val artwork = metadata.artworkUri?.toString()
+            ?: currentQueueTracks.getOrNull(currentIdx)?.artworkUri
+            ?: currentQueueTracks.getOrNull(currentIdx)?.albumArtUri
+
         val nextSnapshot = PlaybackSnapshot(
-            title = metadata.title?.toString() ?: "Nothing playing",
-            artist = metadata.artist?.toString() ?: "Unknown artist",
-            isPlaying = player.isPlaying,
+            title = metadata.title?.toString()
+                ?: currentQueueTracks.getOrNull(currentIdx)?.title
+                ?: "Nothing playing",
+            artist = metadata.artist?.toString()
+                ?: currentQueueTracks.getOrNull(currentIdx)?.artist
+                ?: "Choose a song from your library",
+            album = metadata.albumTitle?.toString()
+                ?: currentQueueTracks.getOrNull(currentIdx)?.album
+                ?: "",
+            artworkUri = artwork,
+            isPlaying = isPlaying,
+            status = status,
             positionMs = player.currentPosition.coerceAtLeast(0L),
-            durationMs = player.duration.takeIf { it > 0L } ?: 0L,
+            durationMs = player.duration.takeIf { it > 0L }
+                ?: currentQueueTracks.getOrNull(currentIdx)?.durationMs
+                ?: 0L,
             shuffleEnabled = player.shuffleModeEnabled,
             repeatMode = player.repeatMode,
-            sleepTimerRemainingMs = sleepTimerEndAt?.let { (it - SystemClock.elapsedRealtime()).coerceAtLeast(0L) }
+            sleepTimerRemainingMs = sleepTimerEndAt?.let { (it - SystemClock.elapsedRealtime()).coerceAtLeast(0L) },
+            audioSessionId = cachedAudioSessionId,
+            errorMessage = activeError,
+            queue = currentQueueTracks,
+            currentIndex = currentIdx
         )
+
         if (nextSnapshot != snapshot) {
             snapshot = nextSnapshot
         }

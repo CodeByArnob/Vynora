@@ -42,7 +42,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PlayCircleFilled
-import androidx.compose.material.icons.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
@@ -562,7 +562,7 @@ private fun MusicArtworkCard(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            if (playlist) Icons.Rounded.PlaylistPlay else Icons.Rounded.PlayArrow,
+                            if (playlist) Icons.AutoMirrored.Rounded.PlaylistPlay else Icons.Rounded.PlayArrow,
                             contentDescription = "Play",
                             tint = Color(0xFF07090E)
                         )
@@ -1058,7 +1058,6 @@ fun YouTubeWatchScreen(
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
-                        settings.databaseEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = false
                         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                         settings.loadsImagesAutomatically = true

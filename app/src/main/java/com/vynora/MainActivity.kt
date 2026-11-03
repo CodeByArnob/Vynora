@@ -9,6 +9,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +31,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -35,14 +40,10 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
-import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,7 +55,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,6 +62,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -73,33 +74,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import coil.compose.AsyncImage
 import com.vynora.library.AudioTrack
 import com.vynora.library.LibraryViewModel
+import com.vynora.library.PlaylistEntity
 import com.vynora.playback.PlaybackController
 import com.vynora.playback.PlaybackSnapshot
+import com.vynora.playback.PlaybackStatus
+import com.vynora.ui.NowPlayingScreen
+import com.vynora.visualizer.AudioVisualizerManager
 import com.vynora.youtube.YouTubeHomeScreen
 import com.vynora.youtube.YouTubeItem
 import com.vynora.youtube.YouTubeViewModel
 import com.vynora.youtube.YouTubeWatchScreen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @UnstableApi
 class MainActivity : ComponentActivity() {
     private lateinit var playbackController: PlaybackController
+    private lateinit var visualizerManager: AudioVisualizerManager
     private val libraryViewModel: LibraryViewModel by viewModels()
     private val youTubeViewModel: YouTubeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         playbackController = PlaybackController(applicationContext)
+        visualizerManager = AudioVisualizerManager(applicationContext)
+
         setContent {
             VynoraApp(
                 playbackController = playbackController,
+                visualizerManager = visualizerManager,
                 libraryViewModel = libraryViewModel,
                 youTubeViewModel = youTubeViewModel
             )
@@ -107,6 +120,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        visualizerManager.release()
         playbackController.release()
         super.onDestroy()
     }
@@ -116,6 +130,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun VynoraApp(
     playbackController: PlaybackController,
+    visualizerManager: AudioVisualizerManager,
     libraryViewModel: LibraryViewModel,
     youTubeViewModel: YouTubeViewModel
 ) {
@@ -125,8 +140,10 @@ private fun VynoraApp(
     val isScanning by libraryViewModel.isScanning.collectAsStateWithLifecycle()
     val scanError by libraryViewModel.scanError.collectAsStateWithLifecycle()
     val youTubeState by youTubeViewModel.state.collectAsStateWithLifecycle()
+    val visualizerFrame by visualizerManager.currentFrame.collectAsStateWithLifecycle()
+
     var selectedYouTubeItem by remember { mutableStateOf<YouTubeItem?>(null) }
-    var hasPermission by remember {
+    var hasStoragePermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
                 context,
@@ -135,27 +152,71 @@ private fun VynoraApp(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
+    var hasRecordPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     var query by remember { mutableStateOf("") }
     var selectedTab by remember { mutableIntStateOf(0) }
     val snapshot = playbackController.snapshot
-    val permission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_AUDIO
+
+    val storagePermission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_AUDIO
     else Manifest.permission.READ_EXTERNAL_STORAGE
 
-    val permissionLauncher = rememberLauncherForActivityResult(
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        hasPermission = granted
+        hasStoragePermission = granted
         if (granted) libraryViewModel.refreshLibrary()
     }
 
+    val recordPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasRecordPermission = granted
+        if (granted && snapshot.audioSessionId > 0) {
+            visualizerManager.attachToSession(snapshot.audioSessionId)
+        }
+    }
+
+    // Attach visualizer when audio session ID becomes available
+    LaunchedEffect(snapshot.audioSessionId) {
+        if (snapshot.audioSessionId > 0) {
+            visualizerManager.attachToSession(snapshot.audioSessionId)
+        }
+    }
+
+    // Run smooth visualizer animation tick loop during active playback
+    LaunchedEffect(snapshot.isPlaying, snapshot.status) {
+        if (snapshot.isPlaying || snapshot.status == PlaybackStatus.PLAYING) {
+            var startTime = System.currentTimeMillis()
+            while (isActive && snapshot.isPlaying) {
+                val now = System.currentTimeMillis()
+                visualizerManager.tick(now - startTime, isPlaying = true)
+                delay(33L) // ~30 FPS for buttery smooth bars and low CPU usage
+            }
+        } else {
+            visualizerManager.tick(0L, isPlaying = false)
+        }
+    }
+
     LaunchedEffect(Unit) { youTubeViewModel.loadHome() }
-    LaunchedEffect(hasPermission) {
-        if (hasPermission) libraryViewModel.refreshLibrary()
+    LaunchedEffect(hasStoragePermission) {
+        if (hasStoragePermission) libraryViewModel.refreshLibrary()
     }
 
     val startAudiusFallbackPlayback: () -> Unit = {
-        // Real YouTube playback stays in-app via WebView theatre player; pause local Media3 to prevent audio overlap
         playbackController.pause()
+    }
+
+    val currentAudioTrackFavorite = remember(snapshot.queue, snapshot.currentIndex, favorites) {
+        val curr = snapshot.queue.getOrNull(snapshot.currentIndex)
+        curr != null && favorites.any { it.uri == curr.uri }
     }
 
     MaterialTheme(
@@ -171,7 +232,7 @@ private fun VynoraApp(
         Scaffold(
             containerColor = Color(0xFF07090E),
             topBar = {
-                if (selectedTab != 5) {
+                if (selectedTab != 5 && selectedTab != 4) {
                     TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF07090E)
@@ -205,7 +266,7 @@ private fun VynoraApp(
                             IconButton(onClick = {
                                 youTubeViewModel.searchVideos(youTubeState.activeQuery)
                                 youTubeViewModel.loadAudiusTrending()
-                                if (hasPermission) libraryViewModel.refreshLibrary()
+                                if (hasStoragePermission) libraryViewModel.refreshLibrary()
                             }) {
                                 Icon(
                                     Icons.Rounded.Refresh,
@@ -223,14 +284,18 @@ private fun VynoraApp(
                         snapshot.title != "Nothing playing" &&
                         snapshot.title != "Player unavailable"
                     ) {
-                        MiniPlayer(snapshot, playbackController, onOpen = { selectedTab = 4 })
+                        MiniPlayer(
+                            snapshot = snapshot,
+                            controller = playbackController,
+                            onOpen = { selectedTab = 4 }
+                        )
                     }
                     NavigationBar(containerColor = Color(0xFF0D121C)) {
                         val tabs = listOf(
                             "Home" to Icons.Rounded.Home,
                             "Library" to Icons.Rounded.LibraryMusic,
                             "Favorites" to Icons.Rounded.Favorite,
-                            "Playlists" to Icons.Rounded.QueueMusic,
+                            "Playlists" to Icons.AutoMirrored.Rounded.QueueMusic,
                             "Playing" to Icons.Rounded.GraphicEq
                         )
                         tabs.forEachIndexed { index, pair ->
@@ -277,10 +342,14 @@ private fun VynoraApp(
                     query = query,
                     onQueryChange = { query = it },
                     isScanning = isScanning,
-                    hasPermission = hasPermission,
+                    hasPermission = hasStoragePermission,
                     scanError = scanError,
-                    onGrantPermission = { permissionLauncher.launch(permission) },
-                    onPlay = { index -> selectedYouTubeItem = null; playbackController.playQueue(tracks, index) },
+                    onGrantPermission = { storagePermissionLauncher.launch(storagePermission) },
+                    onPlay = { index ->
+                        selectedYouTubeItem = null
+                        playbackController.playQueue(tracks, index)
+                        selectedTab = 4
+                    },
                     onRescan = libraryViewModel::refreshLibrary,
                     onFavorite = libraryViewModel::setFavorite
                 )
@@ -289,13 +358,18 @@ private fun VynoraApp(
                     title = "Favorites",
                     subtitle = "${favorites.size} local songs · ${youTubeState.favoriteVideoIds.size} saved videos",
                     tracks = favorites,
-                    onPlay = { index -> selectedYouTubeItem = null; playbackController.playQueue(favorites, index) },
+                    onPlay = { index ->
+                        selectedYouTubeItem = null
+                        playbackController.playQueue(favorites, index)
+                        selectedTab = 4
+                    },
                     onFavorite = { track -> libraryViewModel.setFavorite(track, false) }
                 )
                 3 -> PlaylistsScreen(
                     modifier = Modifier.padding(padding),
                     libraryViewModel = libraryViewModel,
-                    playbackController = playbackController
+                    playbackController = playbackController,
+                    onPlayTrack = { selectedTab = 4 }
                 )
                 4 -> selectedYouTubeItem?.let { item ->
                     YouTubeWatchScreen(
@@ -332,9 +406,18 @@ private fun VynoraApp(
                         modifier = Modifier.padding(padding)
                     )
                 } ?: NowPlayingScreen(
-                    modifier = Modifier.padding(padding),
                     snapshot = snapshot,
-                    controller = playbackController
+                    controller = playbackController,
+                    visualizerFrame = visualizerFrame,
+                    onBack = { selectedTab = 0 },
+                    onToggleFavorite = { track ->
+                        libraryViewModel.setFavorite(track, !currentAudioTrackFavorite)
+                    },
+                    isCurrentFavorite = currentAudioTrackFavorite,
+                    onRequestRecordPermission = {
+                        recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    },
+                    modifier = Modifier.padding(padding)
                 )
                 else -> selectedYouTubeItem?.let { item ->
                     YouTubeWatchScreen(
@@ -433,7 +516,7 @@ private fun LibraryScreen(
                 onGrantPermission
             )
             isScanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xFF1DB954))
             }
             scanError != null -> EmptyLibrary("Scan failed", scanError, "Try again", onRescan)
             filtered.isEmpty() -> EmptyLibrary(
@@ -502,7 +585,16 @@ private fun TrackRow(
                 .background(Brush.linearGradient(listOf(Color(0xFF1DB954), Color(0xFF123524)))),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Rounded.Album, contentDescription = null, tint = Color.Black)
+            if (!track.artworkUri.isNullOrBlank()) {
+                AsyncImage(
+                    model = track.artworkUri,
+                    contentDescription = track.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(Icons.Rounded.Album, contentDescription = null, tint = Color.Black)
+            }
         }
         Column(Modifier.weight(1f).padding(start = 13.dp, end = 8.dp)) {
             Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
@@ -549,7 +641,7 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Rounded.QueueMusic,
+                Icons.AutoMirrored.Rounded.QueueMusic,
                 contentDescription = null,
                 modifier = Modifier.size(42.dp),
                 tint = Color(0xFF1DB954)
@@ -565,7 +657,11 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
 }
 
 @Composable
-private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackController, onOpen: () -> Unit) {
+private fun MiniPlayer(
+    snapshot: PlaybackSnapshot,
+    controller: PlaybackController,
+    onOpen: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
@@ -577,17 +673,26 @@ private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackControlle
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(42.dp),
                 shape = RoundedCornerShape(10.dp),
                 color = Color(0xFF132A1E)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Rounded.GraphicEq,
-                        contentDescription = null,
-                        tint = Color(0xFF1DB954),
-                        modifier = Modifier.size(22.dp)
+                if (!snapshot.artworkUri.isNullOrBlank()) {
+                    AsyncImage(
+                        model = snapshot.artworkUri,
+                        contentDescription = snapshot.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.GraphicEq,
+                            contentDescription = null,
+                            tint = Color(0xFF1DB954),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
@@ -606,13 +711,27 @@ private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackControlle
                     color = Color(0xFF94A3B8)
                 )
             }
+
+            // Play / Pause / Buffering indicator
             IconButton(onClick = controller::togglePlayback) {
-                Icon(
-                    if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = "Play or pause",
-                    tint = Color(0xFF1DB954)
-                )
+                when (snapshot.status) {
+                    PlaybackStatus.BUFFERING, PlaybackStatus.LOADING -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color(0xFF1DB954),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    else -> {
+                        Icon(
+                            if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = "Play or pause",
+                            tint = Color(0xFF1DB954)
+                        )
+                    }
+                }
             }
+
             IconButton(onClick = controller::skipNext) {
                 Icon(
                     Icons.Rounded.SkipNext,
@@ -625,141 +744,11 @@ private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackControlle
 }
 
 @Composable
-private fun NowPlayingScreen(
-    modifier: Modifier,
-    snapshot: PlaybackSnapshot,
-    controller: PlaybackController
-) {
-    Column(
-        modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-                .clip(RoundedCornerShape(34.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF19452C), Color(0xFF0F172A), Color(0xFF1E293B)))),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Rounded.GraphicEq,
-                contentDescription = null,
-                modifier = Modifier.size(104.dp),
-                tint = Color(0xFF1DB954)
-            )
-        }
-        Spacer(Modifier.height(24.dp))
-        Text(
-            snapshot.title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(snapshot.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(18.dp))
-        Slider(
-            value = snapshot.positionMs.toFloat().coerceIn(0f, snapshot.durationMs.coerceAtLeast(1L).toFloat()),
-            onValueChange = { controller.seekTo(it.toLong()) },
-            valueRange = 0f..snapshot.durationMs.coerceAtLeast(1L).toFloat(),
-            enabled = snapshot.durationMs > 0L
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                formatTime(snapshot.positionMs),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                formatTime(snapshot.durationMs),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = controller::toggleShuffle) {
-                Icon(
-                    Icons.Rounded.Shuffle,
-                    contentDescription = "Toggle shuffle",
-                    tint = if (snapshot.shuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = controller::skipPrevious) {
-                Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous track")
-            }
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary) {
-                IconButton(onClick = controller::togglePlayback, modifier = Modifier.size(68.dp)) {
-                    Icon(
-                        if (snapshot.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = "Play or pause",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(34.dp)
-                    )
-                }
-            }
-            IconButton(onClick = controller::skipNext) {
-                Icon(Icons.Rounded.SkipNext, contentDescription = "Next track")
-            }
-            IconButton(onClick = controller::cycleRepeatMode) {
-                Icon(
-                    Icons.Rounded.Repeat,
-                    contentDescription = "Cycle repeat mode",
-                    tint = if (snapshot.repeatMode != 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        var showSleepTimer by remember { mutableStateOf(false) }
-        TextButton(onClick = { showSleepTimer = true }) {
-            Text(snapshot.sleepTimerRemainingMs?.let { "Sleep timer · ${formatTime(it)}" } ?: "Sleep timer")
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Background & Audius streaming powered by Android Media3",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (showSleepTimer) {
-            AlertDialog(
-                onDismissRequest = { showSleepTimer = false },
-                title = { Text("Sleep timer") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(15L, 30L, 45L, 60L).forEach { minutes ->
-                            TextButton(onClick = {
-                                controller.setSleepTimer(minutes * 60_000L)
-                                showSleepTimer = false
-                            }) { Text("${minutes} minutes") }
-                        }
-                        if (snapshot.sleepTimerRemainingMs != null) {
-                            TextButton(onClick = {
-                                controller.cancelSleepTimer()
-                                showSleepTimer = false
-                            }) { Text("Cancel active timer") }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showSleepTimer = false }) { Text("Close") }
-                }
-            )
-        }
-    }
-}
-
-private fun formatTime(milliseconds: Long): String {
-    val seconds = milliseconds.coerceAtLeast(0L) / 1_000L
-    return "%d:%02d".format(seconds / 60L, seconds % 60L)
-}
-
-@Composable
 private fun PlaylistsScreen(
     modifier: Modifier,
     libraryViewModel: LibraryViewModel,
-    playbackController: PlaybackController
+    playbackController: PlaybackController,
+    onPlayTrack: () -> Unit
 ) {
     val playlists by libraryViewModel.playlists.collectAsStateWithLifecycle()
     val selectedId by libraryViewModel.selectedPlaylistId.collectAsStateWithLifecycle()
@@ -811,7 +800,10 @@ private fun PlaylistsScreen(
                         items(selectedTracks, key = { it.uri }) { track ->
                             TrackRow(
                                 track,
-                                onClick = { playbackController.playQueue(selectedTracks, selectedTracks.indexOf(track)) },
+                                onClick = {
+                                    playbackController.playQueue(selectedTracks, selectedTracks.indexOf(track))
+                                    onPlayTrack()
+                                },
                                 onFavorite = { libraryViewModel.removeTrackFromPlaylist(selectedPlaylist.id, track) },
                                 favoriteToggle = false
                             )
@@ -837,7 +829,7 @@ private fun PlaylistsScreen(
                         ) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Rounded.QueueMusic,
+                                    Icons.AutoMirrored.Rounded.QueueMusic,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )

@@ -1,6 +1,7 @@
 package com.vynora.library
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -26,4 +27,10 @@ data class AudioTrack(
             val seconds = durationMs.coerceAtLeast(0L) / 1_000
             return "%d:%02d".format(seconds / 60, seconds % 60)
         }
+
+    val artworkUri: String?
+        get() = if (albumId > 0) "content://media/external/audio/albumart/$albumId" else null
+
+    val albumArtUri: String
+        get() = artworkUri ?: ""
 }
