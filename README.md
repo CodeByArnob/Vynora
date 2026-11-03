@@ -2,7 +2,7 @@
 
 <img src="docs/assets/vynora_icon.png" alt="Vynora Logo" width="112" height="112" style="border-radius: 24px; box-shadow: 0 10px 30px rgba(29, 185, 84, 0.3);" />
 
-# Vynora — Native Android Music Engine
+# Vynora Native Android Music Engine
 
 <p align="center">
   <strong>High-Performance Native Android Audio Streaming &amp; Discovery Platform</strong><br />
