@@ -5,75 +5,79 @@
       <stop offset="50%" stop-color="#0E1525" />
       <stop offset="100%" stop-color="#081C14" />
     </linearGradient>
+    <linearGradient id="audiusPill" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#CC3399" />
+      <stop offset="100%" stop-color="#8833CC" />
+    </linearGradient>
   </defs>
 
   <rect width="1200" height="260" rx="24" fill="url(#archBg)" stroke="#1E293B" stroke-width="2" />
 
   <text x="600" y="38" text-anchor="middle" fill="#1ED760" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="800" letter-spacing="1.5">
-    HYBRID PLAYBACK &amp; ZERO-ERROR EMBED ARCHITECTURE (v0.4.0)
+    AUDIUS-ONLY DECENTRALIZED STREAMING &amp; LOCAL MEDIA3 PIPELINE (v0.8.0)
   </text>
 
-  <!-- Node 1: 90-Day India Discovery -->
+  <!-- Node 1: Keyless Audius Discovery -->
   <g transform="translate(40, 66)" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
-    <rect width="250" height="154" rx="18" fill="#111827" stroke="#1DB954" stroke-width="1.8" />
-    <text x="20" y="34" fill="#1ED760" font-size="12" font-weight="800">01 · DISCOVERY ENGINE</text>
-    <text x="20" y="60" fill="#FFFFFF" font-size="16" font-weight="800">90-Day Indian Labels</text>
-    <text x="20" y="84" fill="#94A3B8" font-size="12">• regionCode=IN &amp; videoCategoryId=10</text>
-    <text x="20" y="104" fill="#94A3B8" font-size="12">• T-Series, Sony, Zee, Saregama</text>
-    <text x="20" y="124" fill="#94A3B8" font-size="12">• Spam &amp; Template Title Blocker</text>
+    <rect width="250" height="154" rx="18" fill="#111827" stroke="#CC3399" stroke-width="1.8" />
+    <text x="20" y="34" fill="#CC3399" font-size="12" font-weight="800">01 · ONLINE STREAMING</text>
+    <text x="20" y="60" fill="#FFFFFF" font-size="16" font-weight="800">Audius V1 Network</text>
+    <text x="20" y="84" fill="#94A3B8" font-size="12">• api.audius.co (Keyless)</text>
+    <text x="20" y="104" fill="#94A3B8" font-size="12">• Decentralized Discovery Nodes</text>
+    <text x="20" y="124" fill="#94A3B8" font-size="12">• 302 Redirect to 200 audio/mpeg</text>
   </g>
 
   <!-- Animated Connector 1 -> 2 -->
   <g transform="translate(290, 143)">
-    <line x1="0" y1="0" x2="65" y2="0" stroke="#1DB954" stroke-width="3" stroke-dasharray="8 6">
+    <line x1="0" y1="0" x2="65" y2="0" stroke="#CC3399" stroke-width="3" stroke-dasharray="8 6">
       <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1s" repeatCount="indefinite" />
     </line>
-    <polygon points="65,-6 77,0 65,6" fill="#1ED760" />
+    <polygon points="65,-6 77,0 65,6" fill="#CC3399" />
   </g>
 
-  <!-- Node 2: 3P HTTPS Origin WebView -->
+  <!-- Node 2: Media3 ExoPlayer Engine -->
   <g transform="translate(368, 66)" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
-    <rect width="250" height="154" rx="18" fill="#111827" stroke="#38BDF8" stroke-width="1.8" />
-    <text x="20" y="34" fill="#38BDF8" font-size="12" font-weight="800">02 · OFFICIAL YT PLAYER</text>
-    <text x="20" y="60" fill="#FFFFFF" font-size="16" font-weight="800">3P HTTPS Origin</text>
-    <text x="20" y="84" fill="#94A3B8" font-size="12">• BaseURL: https://vynora.music.app</text>
-    <text x="20" y="104" fill="#94A3B8" font-size="12">• Eliminates Error 152 &amp; Error 153</text>
-    <text x="20" y="124" fill="#94A3B8" font-size="12">• Segmented Video | Song Toggle</text>
+    <rect width="250" height="154" rx="18" fill="#111827" stroke="#1DB954" stroke-width="1.8" />
+    <text x="20" y="34" fill="#1DB954" font-size="12" font-weight="800">02 · AUDIO ENGINE</text>
+    <text x="20" y="60" fill="#FFFFFF" font-size="16" font-weight="800">Media3 &amp; SimpleCache</text>
+    <text x="20" y="84" fill="#94A3B8" font-size="12">• VynoraAudioCache (256MB LRU)</text>
+    <text x="20" y="104" fill="#94A3B8" font-size="12">• DefaultLoadControl (500ms Start)</text>
+    <text x="20" y="124" fill="#94A3B8" font-size="12">• MediaSession Foreground Service</text>
   </g>
 
   <!-- Animated Connector 2 -> 3 -->
   <g transform="translate(618, 143)">
-    <line x1="0" y1="0" x2="65" y2="0" stroke="#38BDF8" stroke-width="3" stroke-dasharray="8 6">
+    <line x1="0" y1="0" x2="65" y2="0" stroke="#1DB954" stroke-width="3" stroke-dasharray="8 6">
       <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1s" repeatCount="indefinite" />
     </line>
-    <polygon points="65,-6 77,0 65,6" fill="#38BDF8" />
+    <polygon points="65,-6 77,0 65,6" fill="#1DB954" />
   </g>
 
-  <!-- Node 3: VynoraBridge Auto-Fallback -->
+  <!-- Node 3: Real-Time FFT Visualizer -->
   <g transform="translate(696, 66)" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
-    <rect width="210" height="154" rx="18" fill="#111827" stroke="#F59E0B" stroke-width="1.8" />
-    <text x="18" y="34" fill="#F59E0B" font-size="12" font-weight="800">03 · SMART GUARD</text>
-    <text x="18" y="60" fill="#FFFFFF" font-size="16" font-weight="800">Auto-Fallback</text>
-    <text x="18" y="84" fill="#94A3B8" font-size="12">• Intercepts Code 150/152</text>
-    <text x="18" y="104" fill="#94A3B8" font-size="12">• Switches to Song Mode</text>
-    <text x="18" y="124" fill="#94A3B8" font-size="12">• Zero Broken Error Screen</text>
+    <rect width="210" height="154" rx="18" fill="#111827" stroke="#38BDF8" stroke-width="1.8" />
+    <text x="18" y="34" fill="#38BDF8" font-size="12" font-weight="800">03 · AUDIO VISUALIZER</text>
+    <text x="18" y="60" fill="#FFFFFF" font-size="16" font-weight="800">28-Band FFT</text>
+    <text x="18" y="84" fill="#94A3B8" font-size="12">• AudioSessionId Bridge</text>
+    <text x="18" y="104" fill="#94A3B8" font-size="12">• Bass Extraction (Bins 1..8)</text>
+    <text x="18" y="124" fill="#94A3B8" font-size="12">• Jetpack Compose Canvas 60FPS</text>
   </g>
 
   <!-- Animated Connector 3 -> 4 -->
   <g transform="translate(906, 143)">
-    <line x1="0" y1="0" x2="42" y2="0" stroke="#1ED760" stroke-width="3" stroke-dasharray="8 6">
+    <line x1="0" y1="0" x2="50" y2="0" stroke="#38BDF8" stroke-width="3" stroke-dasharray="8 6">
       <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1s" repeatCount="indefinite" />
     </line>
-    <polygon points="42,-6 54,0 42,6" fill="#1ED760" />
+    <polygon points="50,-6 62,0 50,6" fill="#38BDF8" />
   </g>
 
-  <!-- Node 4: Media3 ExoPlayer & Room -->
-  <g transform="translate(960, 66)" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
-    <rect width="200" height="154" rx="18" fill="#111827" stroke="#1ED760" stroke-width="1.8" />
-    <text x="18" y="34" fill="#1ED760" font-size="12" font-weight="800">04 · MEDIA3 ENGINE</text>
-    <text x="18" y="60" fill="#FFFFFF" font-size="16" font-weight="800">ExoPlayer + Room</text>
-    <text x="18" y="84" fill="#94A3B8" font-size="12">• Audius V1 Direct Stream</text>
-    <text x="18" y="104" fill="#94A3B8" font-size="12">• Offline MP3 / FLAC</text>
-    <text x="18" y="124" fill="#94A3B8" font-size="12">• Lockscreen &amp; Bluetooth</text>
+  <!-- Node 4: Local Storage & Room DB -->
+  <g transform="translate(970, 66)" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+    <rect width="190" height="154" rx="18" fill="#111827" stroke="#F59E0B" stroke-width="1.8" />
+    <text x="16" y="34" fill="#F59E0B" font-size="12" font-weight="800">04 · LOCAL LIBRARY</text>
+    <text x="16" y="60" fill="#FFFFFF" font-size="16" font-weight="800">100% Offline</text>
+    <text x="16" y="84" fill="#94A3B8" font-size="12">• Android MediaStore</text>
+    <text x="16" y="104" fill="#94A3B8" font-size="12">• Room Database &amp; Playlists</text>
+    <text x="16" y="124" fill="#94A3B8" font-size="12">• Zero Network Required</text>
   </g>
 </svg>

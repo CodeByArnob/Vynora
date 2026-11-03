@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vynora — Native Android Music Player &amp; Keyless Audius Streaming</title>
+  <meta name="description" content="Open-source native Android music player crafted with Jetpack Compose, AndroidX Media3 ExoPlayer, and decentralized keyless Audius streaming. Zero API keys. Real-time 28-band bass visualizer." />
+  <meta name="keywords" content="Vynora, Android Music Player, Jetpack Compose, Media3 ExoPlayer, Audius, Music Streaming, Audio Visualizer, Open Source, Material 3" />
+  <meta name="author" content="CodeByArnob" />
+
+  <!-- Open Graph / Social Meta -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Vynora — Native Android Music Player &amp; Audius Streaming" />
+  <meta property="og:description" content="Decentralized Audius streaming, offline MediaStore player, and real-time 28-band hardware FFT audio visualizer." />
+  <meta property="og:image" content="assets/vynora_icon.png" />
+  <meta property="og:url" content="https://codebyarnob.github.io/Vynora/" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/vynora_icon.png" />
+  <link rel="apple-touch-icon" href="assets/vynora_icon.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ==================== STICKY NAVIGATION ==================== -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#hero" class="nav-brand" aria-label="Vynora Home">
+        <img src="assets/vynora_icon.png" alt="Vynora App Icon" class="nav-logo" />
+        <span class="nav-brand-title">Vynora</span>
+        <span class="nav-version">v0.8.0</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#visualizer" class="nav-link">Visualizer</a></li>
+          <li><a href="#showcase" class="nav-link">Showcase</a></li>
+          <li><a href="#architecture" class="nav-link">Architecture</a></li>
+          <li><a href="#specs" class="nav-link">Tech Specs</a></li>
+          <li><a href="#download" class="nav-link">Download</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/CodeByArnob/Vynora" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="GitHub Repository">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#download" class="btn btn-primary btn-sm">
+          <span>Download APK</span>
+        </a>
+        <button class="nav-mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          ☰
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO SECTION ==================== -->
+  <section id="hero" class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <span class="hero-pill-badge">PRODUCTION RELEASE</span>
+        <span>v0.8.0 · 100% Keyless Audius &amp; MediaStore Offline</span>
+      </div>
+
+      <h1 class="hero-title">
+        Pure Native Sound.<br />
+        <span class="gradient-text">Decentralized &amp; Unchained.</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Vynora is a high-performance Android music player built with Jetpack Compose, AndroidX Media3 ExoPlayer, and decentralized Audius streaming. Zero API keys. Instant offline playback. Hardware-accelerated 28-band bass-reactive audio visualizer.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.8.0-debug.apk" class="btn btn-primary btn-lg">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download APK (v0.8.0) · 26.9 MB</span>
+        </a>
+        <a href="#showcase" class="btn btn-secondary btn-lg">
+          <span>Explore Screenshots</span>
+        </a>
+        <a href="https://github.com/CodeByArnob/Vynora" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+          <span>View Source Code</span>
+        </a>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-value">28</div>
+          <div class="stat-label">FFT Frequency Bands</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">256 <span style="font-size: 1rem; color: #1ED760;">MB</span></div>
+          <div class="stat-label">Media3 LRU Cache</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">API Keys Required</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">26–36</div>
+          <div class="stat-label">Android API Support</div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Vector Showcase -->
+      <div class="hero-visual">
+        <div class="hero-visual-card">
+          <img src="assets/vynora-hero-motion.svg" alt="Vynora Architecture &amp; UI Banner" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== INTERACTIVE VISUALIZER SECTION ==================== -->
+  <section id="visualizer" class="visualizer-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">REAL-TIME AUDIO ENGINE</span>
+        <h2 class="section-title">
+          Universal <span class="gradient-text-amber">28-Band Hardware FFT</span> Spectrum
+        </h2>
+        <p class="section-subtitle">
+          Vynora hooks directly into AndroidX Media3 ExoPlayer’s raw audio session ID. Experience physics-based peak dots, logarithmic frequency mapping, and dynamic amber album-art illumination.
+        </p>
+      </div>
+
+      <div class="visualizer-card">
+        <div class="visualizer-canvas-container">
+          <div class="visualizer-overlay-info">
+            <span class="visualizer-pulse-dot"></span>
+            <span>Hardware AudioSession FFT Active · 60 FPS</span>
+          </div>
+          <canvas id="visualizerCanvas"></canvas>
+        </div>
+
+        <div class="visualizer-controls">
+          <div class="vis-audio-btn-group">
+            <button id="visPlayBtn" class="btn btn-secondary btn-sm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="visPlayBtnText">Play Demo Sound</span>
+            </button>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Interactive Web Audio API Synthesizer</span>
+          </div>
+
+          <div class="vis-theme-group">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">PALETTE:</span>
+            <button class="theme-pill active" data-theme="amber">Amber Glow</button>
+            <button class="theme-pill" data-theme="emerald">Vynora Green</button>
+            <button class="theme-pill" data-theme="audius">Audius Magenta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SCREENSHOT SHOWCASE SECTION ==================== -->
+  <section id="showcase" class="showcase-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">AUTHENTIC APP GALLERY</span>
+        <h2 class="section-title">
+          Crafted for Android <span class="gradient-text">Material 3</span>
+        </h2>
+        <p class="section-subtitle">
+          Real in-app captures recorded directly on Android 16 (API 36) showcasing the production interface in action.
+        </p>
+      </div>
+
+      <!-- Screen Navigation Tabs -->
+      <div class="showcase-tabs">
+        <button class="showcase-tab active" data-screen="nowplaying">Now Playing &amp; FFT</button>
+        <button class="showcase-tab" data-screen="home">Discovery Home</button>
+        <button class="showcase-tab" data-screen="explore">Explore Charts</button>
+        <button class="showcase-tab" data-screen="library">Offline Library</button>
+        <button class="showcase-tab" data-screen="playlist">Album Detail</button>
+      </div>
+
+      <!-- Active Showcase Interactive Mockup -->
+      <div class="showcase-display">
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <img id="showcasePhoneImg" src="assets/screenshots/screenshot_now_playing.jpg" alt="Vynora Now Playing Screen with 28-Band Hardware FFT" />
+          </div>
+        </div>
+
+        <div class="showcase-details">
+          <span id="showcaseBadge" class="showcase-badge">Core Playback Engine</span>
+          <h3 id="showcaseHeading" class="showcase-heading">Bass-Reactive 28-Band Hardware FFT Player</h3>
+          <p id="showcaseDesc" class="showcase-desc">
+            Connects directly to AndroidX Media3 ExoPlayer’s native audio session ID. Renders 28 logarithmic frequency bins, physics-calculated peak-hold indicators, and extracts dynamic ambient amber glow from album cover art.
+          </p>
+
+          <ul id="showcaseList" class="showcase-list">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Zero-latency real-time hardware spectrum analysis
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Dynamic amber glow extracted from LOUDWERX album art
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Integrated sleep timer &amp; queue track controls
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Android MediaSession background service continuity
+            </li>
+          </ul>
+
+          <div style="margin-top: 10px;">
+            <a href="https://github.com/CodeByArnob/Vynora/releases/latest" class="btn btn-primary btn-sm">
+              <span>Install This Release (v0.8.0)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CORE FEATURES GRID ==================== -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ENGINEERED FOR EXCELLENCE</span>
+        <h2 class="section-title">
+          Everything an Audiophile Needs
+        </h2>
+        <p class="section-subtitle">
+          From decentralized blockchain audio nodes to local offline FLAC decoding, Vynora is engineered with zero compromises.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1: Audius Keyless Streaming -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-audius">
+            🌐
+          </div>
+          <h3 class="feature-title">100% Keyless Audius Discovery</h3>
+          <p class="feature-desc">
+            Stream millions of tracks directly from decentralized Audius validator nodes. Dynamic host resolution queries live endpoints with automatic fallback. Zero API keys, zero quota throttling, and zero subscription walls.
+          </p>
+        </div>
+
+        <!-- Feature 2: Hardware FFT Visualizer -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-amber">
+            🎛️
+          </div>
+          <h3 class="feature-title">28-Band Hardware Visualizer</h3>
+          <p class="feature-desc">
+            Native Android Visualizer API hooked into the ExoPlayer audio session. 28 logarithmic frequency bins from 20Hz sub-bass to 20kHz highs, with physics-based gravity decay on floating peak hold dots.
+          </p>
+        </div>
+
+        <!-- Feature 3: Offline MediaStore -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-green">
+            📁
+          </div>
+          <h3 class="feature-title">Universal Offline Player</h3>
+          <p class="feature-desc">
+            Direct integration with the Android MediaStore content resolver. Instantly indexes MP3, FLAC, WAV, M4A, and OGG audio on device storage with zero-lag search filtering. Room SQLite persists playlists and favorites.
+          </p>
+        </div>
+
+        <!-- Feature 4: Media3 256MB LRU Cache -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-green">
+            ⚡
+          </div>
+          <h3 class="feature-title">256MB Resilient Audio Cache</h3>
+          <p class="feature-desc">
+            Built on AndroidX Media3 SimpleCache and LeastRecentlyUsedCacheEvictor. Automatically prebuffers upcoming tracks in queue for instantaneous, gapless next/previous track transitions without mobile data waste.
+          </p>
+        </div>
+
+        <!-- Feature 5: Material 3 Theming -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-audius">
+            🎨
+          </div>
+          <h3 class="feature-title">Material 3 Dynamic Glow</h3>
+          <p class="feature-desc">
+            Dynamic ambient backlight extracted directly from the active album cover palette. Persistent docked miniplayer with edge-to-edge Compose rendering and smooth modal bottom sheets.
+          </p>
+        </div>
+
+        <!-- Feature 6: Background Continuity -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper feature-icon-amber">
+            🛡️
+          </div>
+          <h3 class="feature-title">Resilient Background Service</h3>
+          <p class="feature-desc">
+            VynoraPlaybackService implements AndroidX MediaSessionService. Flawless audio playback during screen lock, app minimization, incoming call audio focus shifts, and wireless Bluetooth headset unplugging.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ARCHITECTURE SECTION ==================== -->
+  <section id="architecture" class="architecture-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">MODERN CLEAN ARCHITECTURE</span>
+        <h2 class="section-title">
+          Robust, Scalable &amp; Decoupled
+        </h2>
+        <p class="section-subtitle">
+          Clean MVVM separation with Kotlin 2.1 Coroutines, StateFlow, AndroidX Media3 ExoPlayer, and decentralized network services.
+        </p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-img-wrapper">
+          <img src="assets/vynora-architecture-motion.svg" alt="Vynora Clean Architecture &amp; Audio Pipeline" loading="lazy" />
+        </div>
+
+        <div style="text-align: center; margin-top: 24px;">
+          <a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+            <span>Read Complete Architecture Whitepaper</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TECHNICAL SPECS TABLE ==================== -->
+  <section id="specs" class="specs-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ENGINEERING SPECIFICATIONS</span>
+        <h2 class="section-title">
+          Technical Specifications
+        </h2>
+        <p class="section-subtitle">
+          Production-grade dependencies and Android platform standards implemented in Vynora v0.8.0.
+        </p>
+      </div>
+
+      <div class="specs-table-wrapper">
+        <table class="specs-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Technology / Library</th>
+              <th>Version</th>
+              <th>Architectural Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Programming Language</strong></td>
+              <td>Kotlin</td>
+              <td><span class="badge-tag">2.1.0</span></td>
+              <td>Primary language with Coroutines, Flow, and strict type safety</td>
+            </tr>
+            <tr>
+              <td><strong>UI Framework</strong></td>
+              <td>Jetpack Compose &amp; Material 3</td>
+              <td><span class="badge-tag">BOM 2024.12.01</span></td>
+              <td>Declarative reactive UI, edge-to-edge layouts, and smooth 120Hz animations</td>
+            </tr>
+            <tr>
+              <td><strong>Audio Playback Engine</strong></td>
+              <td>AndroidX Media3 (ExoPlayer)</td>
+              <td><span class="badge-tag">1.5.1</span></td>
+              <td>Audio streaming, chunk buffering, 256MB LRU disk cache, and queue management</td>
+            </tr>
+            <tr>
+              <td><strong>Background Service</strong></td>
+              <td>Media3 MediaSessionService</td>
+              <td><span class="badge-tag">1.5.1</span></td>
+              <td>VynoraPlaybackService handling lockscreen, audio focus, and media notifications</td>
+            </tr>
+            <tr>
+              <td><strong>Online Discovery</strong></td>
+              <td>Audius REST API</td>
+              <td><span class="badge-tag">v1 Decentralized</span></td>
+              <td>100% keyless online music discovery, trending charts, and direct streams</td>
+            </tr>
+            <tr>
+              <td><strong>Offline Discovery</strong></td>
+              <td>Android MediaStore</td>
+              <td><span class="badge-tag">API 26–36</span></td>
+              <td>Automatic local indexing of MP3, FLAC, WAV, M4A, and OGG audio files</td>
+            </tr>
+            <tr>
+              <td><strong>Local Persistence</strong></td>
+              <td>Room SQLite Database</td>
+              <td><span class="badge-tag">2.6.1</span></td>
+              <td>User playlists, favorite songs, playback history, and play queue</td>
+            </tr>
+            <tr>
+              <td><strong>Networking</strong></td>
+              <td>Retrofit &amp; OkHttp</td>
+              <td><span class="badge-tag">2.11.0 / 4.12.0</span></td>
+              <td>Dynamic host selection, stream redirects, and network connection pooling</td>
+            </tr>
+            <tr>
+              <td><strong>Image Loading</strong></td>
+              <td>Coil Compose</td>
+              <td><span class="badge-tag">2.7.0</span></td>
+              <td>Asynchronous album art loading, memory caching, and palette extraction</td>
+            </tr>
+            <tr>
+              <td><strong>Target Platform</strong></td>
+              <td>Android 16 (VanillaIceCream)</td>
+              <td><span class="badge-tag">API 36</span></td>
+              <td>Target SDK with backwards compatibility down to Android 8.0 (API 26)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 1-CLICK APK DOWNLOAD ==================== -->
+  <section id="download" class="download-section">
+    <div class="container">
+      <div class="download-box">
+        <h2 class="download-box-title">
+          Get Vynora for Android
+        </h2>
+        <p class="download-box-subtitle">
+          Direct 1-click APK download. Verified with Android APK Signature Scheme v2. Free and open-source under the Apache License 2.0.
+        </p>
+
+        <div class="download-ctas">
+          <a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-v0.8.0-debug.apk" class="btn btn-primary btn-lg">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download APK (v0.8.0) · 26.9 MB</span>
+          </a>
+
+          <a href="https://github.com/CodeByArnob/Vynora/releases/latest/download/Vynora-latest.apk" class="btn btn-secondary btn-lg">
+            <span>Download Latest Channel</span>
+          </a>
+
+          <a href="https://github.com/CodeByArnob/Vynora/releases/tag/v0.8.0" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+            <span>GitHub Release Notes</span>
+          </a>
+        </div>
+
+        <!-- Cryptographic Checksum Box -->
+        <div class="checksum-container">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">SHA-256 Verified Checksum</div>
+            <div id="checksumText" class="checksum-code">25B4482756FF86C8DE498236BD6E48C6887A1540BA7D45E2EBB84227183BB89B</div>
+          </div>
+          <button class="copy-btn" data-copy-target="checksumText">Copy SHA-256</button>
+        </div>
+
+        <!-- 3-Step Installation Guide -->
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="install-step-num">01</div>
+            <div class="install-step-title">Download APK</div>
+            <div class="install-step-desc">Tap the download button above to download the verified v0.8.0 Android APK file to your device.</div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">02</div>
+            <div class="install-step-title">Allow Unknown Apps</div>
+            <div class="install-step-desc">If prompted by Android, enable "Install unknown apps" in Settings for your browser or file manager.</div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">03</div>
+            <div class="install-step-title">Enjoy Your Music</div>
+            <div class="install-step-desc">Launch Vynora, grant audio storage permissions, and start streaming Audius tracks or local MP3/FLAC music.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-brand-title">
+            <img src="assets/vynora_icon.png" alt="Vynora Icon" width="28" height="28" style="border-radius: 6px;" />
+            <span>Vynora</span>
+          </div>
+          <p class="footer-brand-desc">
+            Open-source native Android music player combining decentralized Audius streaming with local offline MediaStore audio playback and real-time hardware FFT visualization.
+          </p>
+        </div>
+
+        <div class="footer-nav">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#visualizer">Hardware FFT</a></li>
+              <li><a href="#showcase">Screenshots</a></li>
+              <li><a href="#download">Download APK</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Architecture</h4>
+            <ul>
+              <li><a href="#architecture">Clean MVVM</a></li>
+              <li><a href="#specs">Tech Stack</a></li>
+              <li><a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/AUDIUS_INTEGRATION.md" target="_blank" rel="noopener noreferrer">Audius Pipeline</a></li>
+              <li><a href="https://github.com/CodeByArnob/Vynora/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Documentation</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Community</h4>
+            <ul>
+              <li><a href="https://github.com/CodeByArnob/Vynora" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+              <li><a href="https://github.com/CodeByArnob/Vynora/releases" target="_blank" rel="noopener noreferrer">Releases &amp; Changelogs</a></li>
+              <li><a href="https://github.com/CodeByArnob/Vynora/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+              <li><a href="https://github.com/CodeByArnob" target="_blank" rel="noopener noreferrer">Author Profile</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; 2026 <strong>Vynora Project</strong>. Licensed under the <a href="https://github.com/CodeByArnob/Vynora/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Apache License 2.0</a>.
+        </div>
+        <div>
+          Crafted with &hearts; by <a href="https://github.com/CodeByArnob" target="_blank" rel="noopener noreferrer">Arnob</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toastNotification" class="toast">Copied to clipboard!</div>
+
+  <!-- Interactive JavaScript Engine -->
+  <script src="app.js"></script>
+</body>
+</html>
