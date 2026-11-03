@@ -41,7 +41,26 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug
       - name: Android lint
+        id: android_lint
+        continue-on-error: true
         run: gradle :app:lintDebug
+
+      - name: Upload Android lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vynora-android-lint-report
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Enforce clean Android lint
+        if: steps.android_lint.outcome == 'failure'
+        run: |
+          cat app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt || true
+          exit 1
       - name: Run unit tests
         run: gradle :app:testDebugUnitTest
       - uses: actions/upload-artifact@v6

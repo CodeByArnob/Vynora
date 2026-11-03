@@ -1,3 +1,5 @@
+@file:OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.vynora
 
 import android.Manifest
@@ -33,7 +35,7 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.QueueMusic
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
@@ -170,7 +172,7 @@ private fun VynoraApp(
                         val tabs = listOf(
                             "Library" to Icons.Rounded.LibraryMusic,
                             "Favorites" to Icons.Rounded.Favorite,
-                            "Playlists" to Icons.Rounded.QueueMusic,
+                            "Playlists" to Icons.AutoMirrored.Rounded.QueueMusic,
                             "Player" to Icons.Rounded.GraphicEq
                         )
                         tabs.forEachIndexed { index, pair ->
