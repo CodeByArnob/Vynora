@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -23,6 +24,7 @@ data class PlaybackSnapshot(
     val durationMs: Long = 0L
 )
 
+@UnstableApi
 class PlaybackController(context: Context) {
     var snapshot by mutableStateOf(PlaybackSnapshot())
         private set
@@ -80,6 +82,10 @@ class PlaybackController(context: Context) {
         controller?.let { if (it.isPlaying) it.pause() else it.play() }
     }
 
+    fun skipNext() { controller?.seekToNextMediaItem() }
+
+    fun skipPrevious() { controller?.seekToPreviousMediaItem() }
+
     fun seekTo(positionMs: Long) {
         controller?.seekTo(positionMs.coerceAtLeast(0L))
     }
@@ -99,7 +105,7 @@ class PlaybackController(context: Context) {
     fun release() {
         controller?.removeListener(listener)
         controller = null
-        controllerFuture?.let(MediaController::releaseFuture)
+        controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null
     }
 }
