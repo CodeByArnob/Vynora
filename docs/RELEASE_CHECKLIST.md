@@ -1,11 +1,14 @@
 # Release readiness checklist
 
-This checklist reflects the actual release gates; generated build artifacts are not proof of Play Store readiness.
+This checklist reflects actual implementation; a successful CI run alone is not proof of Play Store readiness.
 
 ## Implemented in repository
 
 - [x] Vynora launcher icon source committed
 - [x] Android launcher icon generation configured
+- [x] User-initiated local audio import into app-private storage
+- [x] Local audio playback queue and mini-player
+- [x] Background audio service and media notification integration configured
 - [x] Automated formatting, static analysis and test checks
 - [x] Android platform bootstrap and release-mode QA build in GitHub Actions
 - [x] QA APK uploaded as a workflow artifact
@@ -13,11 +16,11 @@ This checklist reflects the actual release gates; generated build artifacts are 
 ## Required before production release
 
 - [ ] Confirm CI is green on the committed Android platform
-- [ ] Implement and test on-device music indexing and permission handling
-- [ ] Implement local playback, persistent queue/playlists and favorites
-- [ ] Implement background playback, media notification, lock-screen and headset controls
-- [ ] Pin Flutter SDK and dependency versions for reproducible releases
-- [ ] Add unit, widget, integration and Android device test coverage
+- [ ] Verify import, playback, deletion and file persistence on physical devices
+- [ ] Verify background playback, audio focus, interruptions, notification and headset controls
+- [ ] Add metadata extraction, artwork, search, playlists, favorites and queue editing
+- [ ] Add widget and integration tests for the local player and navigation
+- [ ] Pin all dependency versions in the committed lockfile and audit updates
 - [ ] Test supported Android API levels and common device vendors
 - [ ] Configure a dedicated protected Android upload keystore in GitHub Secrets
 - [ ] Configure release signing and verify the signed APK/AAB certificate
@@ -27,7 +30,7 @@ This checklist reflects the actual release gates; generated build artifacts are 
 - [ ] Complete app screenshots, store listing, content rating and support details
 - [ ] Verify offline, empty, timeout, quota-exceeded and permission-denied states
 - [ ] Verify accessibility, crash reporting and performance on physical devices
-- [ ] Create and verify a signed release artifact before tagging a production version
+- [ ] Create and verify a signed AAB before tagging a production version
 
 ## Signing requirements
 
