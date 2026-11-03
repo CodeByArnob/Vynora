@@ -1,23 +1,47 @@
 # Vynora
 
-**Your music, beautifully organized.**
+<p align="center">
+  <strong>A native Android music player, built for your local library.</strong><br/>
+  Kotlin · Jetpack Compose · Material 3 · AndroidX Media3
+</p>
 
-Vynora is an offline-first native Android music player built with Kotlin, Jetpack Compose, Material 3 and AndroidX Media3.
+<p align="center">
+  <a href="https://github.com/CodeByArnob/Vynora/actions/workflows/native-android-ci.yml"><img alt="Native Android CI" src="https://github.com/CodeByArnob/Vynora/actions/workflows/native-android-ci.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/CodeByArnob/Vynora/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white">
+  <img alt="Language" src="https://img.shields.io/badge/language-Kotlin-7F52FF?logo=kotlin&logoColor=white">
+</p>
 
-## Current capabilities
+Vynora is an offline-first Android music player focused on a clean native experience, fast local-library browsing and reliable background playback. The active application is implemented in **Kotlin and Jetpack Compose**; Flutter is no longer used to build the Android app.
 
-- MediaStore indexing of device audio with granular runtime permission.
-- Room-backed library metadata, favorites and playlists.
-- Library, Favorites, Playlists and Now Playing Compose screens.
-- Media3 ExoPlayer with background MediaSessionService.
-- Queue playback, play/pause, next/previous, seeking, shuffle and repeat.
-- Native launcher icon.
-- GitHub Actions debug build, Android lint, unit tests and APK artifact.
-- Dependabot updates for Gradle and GitHub Actions.
+## Product preview
 
-## Build and verify
+> Real-device screenshots will be added here after capture and verification on a physical Android device. No concept renders or mockups are presented as application screenshots.
 
-Requirements: JDK 17, Android SDK Platform 36, Gradle 8.13 and Android Gradle Plugin 8.13.2.
+## Features
+
+| Area | Current implementation |
+| --- | --- |
+| Local library | MediaStore audio indexing with Android media permissions |
+| Browsing | Songs, albums, artists and folders |
+| Personal library | Room-backed favorites and playlists |
+| Playback | AndroidX Media3 ExoPlayer and MediaSessionService |
+| Controls | Play/pause, next/previous, seek, shuffle and repeat |
+| Sleep timer | 15, 30, 45 and 60 minute presets with cancellation |
+| Interface | Native Jetpack Compose and Material 3 |
+| Quality gates | Gradle build, Android lint and JVM unit tests in GitHub Actions |
+
+Feature availability can vary by Android version and device. Physical-device validation is still required before a stable public release.
+
+## Download
+
+**GitHub Releases:** [Download the latest Vynora APK](https://github.com/CodeByArnob/Vynora/releases/latest)
+
+If no release is published yet, use the [Actions page](https://github.com/CodeByArnob/Vynora/actions/workflows/native-android-ci.yml) to download the latest CI debug APK. CI artifacts are temporary; GitHub Releases are the permanent, versioned distribution channel.
+
+### Build locally
+
+Requirements: JDK 17, Android SDK Platform 36 and Gradle 8.13.
 
 ```bash
 gradle :app:assembleDebug
@@ -25,20 +49,34 @@ gradle :app:lintDebug
 gradle :app:testDebugUnitTest
 ```
 
-Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
+Debug APK output:
 
-## Migration
+```
+app/build/outputs/apk/debug/app-debug.apk
+```
 
-The root-level Kotlin/Compose project is the active Android app. Previous Flutter source under `lib/`, `test/` and `pubspec.yaml` is retained as a migration reference and is not part of the Android build.
+## Architecture
 
-## Not yet production-complete
+- **UI:** Jetpack Compose + Material 3
+- **Language:** Kotlin
+- **Playback:** AndroidX Media3 / ExoPlayer
+- **Background audio:** MediaSessionService
+- **Local persistence:** Room
+- **Library indexing:** Android MediaStore
+- **Build:** Gradle Kotlin DSL
 
-Album/artist/folder browsing, artwork cache, editable queue, sleep timer, lyrics, equalizer, widgets, Android Auto, full UI/device test coverage, physical-device validation, signed AAB and Play Console preparation remain outstanding. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+The old Flutter source is retained temporarily as migration history/reference and is not included in the native Android build. Its presence may still appear in GitHub's repository language statistics until that legacy source is archived or removed.
 
-A green CI run confirms only the configured automated gates; it is not a claim of device or store readiness.
+## Release status
 
-PixelPlayer is used only as a UX/feature reference. No proprietary source, trademarks or artwork are copied.
+A successful CI build verifies only the automated build, lint and unit-test gates. It does **not** certify physical-device compatibility, signed release readiness or Play Store compliance. Release APKs produced by the current automated pipeline are debug-signed preview builds, not production-signed Play Store packages.
+
+Before a stable release, the project still needs broader device testing, audio-focus and Bluetooth validation, artwork handling, queue editing/persistence, accessibility review, a production signing configuration and Play Console preparation. See [the release checklist](docs/RELEASE_CHECKLIST.md).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and contribution expectations.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Vynora is distributed under the [MIT License](LICENSE).
