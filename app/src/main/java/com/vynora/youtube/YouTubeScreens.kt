@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -260,21 +261,28 @@ fun YouTubeWatchScreen(item: YouTubeItem, onBack: () -> Unit, modifier: Modifier
                     settings.mediaPlaybackRequiresUserGesture = true
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                     settings.loadsImagesAutomatically = true
+                    settings.javaScriptCanOpenWindowsAutomatically = false
+                    webViewClient = WebViewClient()
                     webChromeClient = WebChromeClient()
+                    val videoOrigin = "https://www.youtube.com"
                     val source = if (item.isPlaylist) {
-                        "https://www.youtube.com/embed/videoseries?list=${item.id}&playsinline=1"
+                        "$videoOrigin/embed/videoseries?list=${item.id}&playsinline=1&enablejsapi=1&origin=$videoOrigin"
                     } else {
-                        "https://www.youtube.com/embed/${item.id}?playsinline=1"
+                        "$videoOrigin/embed/${item.id}?playsinline=1&enablejsapi=1&origin=$videoOrigin"
                     }
                     val html = """
                         <!doctype html><html><head>
                         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                        <meta name="referrer" content="strict-origin-when-cross-origin">
                         <style>html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden}iframe{border:0;width:100%;height:100%}</style>
                         </head><body>
-                        <iframe src="$source" title="YouTube player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        <iframe src="$source" title="YouTube player"
+                          referrerpolicy="strict-origin-when-cross-origin"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowfullscreen></iframe>
                         </body></html>
                     """.trimIndent()
-                    loadDataWithBaseURL("https://www.youtube.com/", html, "text/html", "UTF-8", null)
+                    loadDataWithBaseURL(videoOrigin, html, "text/html", "UTF-8", null)
                 }
             }
         )
