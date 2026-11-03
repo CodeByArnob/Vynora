@@ -48,9 +48,9 @@ class YouTubeTrendingService {
       'key': _apiKey,
     });
 
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 15));
+    final response = await _client.get(uri).timeout(
+          const Duration(seconds: 15),
+        );
 
     if (response.statusCode != 200) {
       String? message;
@@ -86,10 +86,12 @@ class YouTubeTrendingService {
     return rawItems
         .whereType<Map<String, dynamic>>()
         .map(TrendingVideo.fromJson)
-        .where((track) =>
-            track.id.isNotEmpty &&
-            track.isMusic &&
-            track.thumbnailUrl.isNotEmpty)
+        .where(
+          (track) =>
+              track.id.isNotEmpty &&
+              track.isMusic &&
+              track.thumbnailUrl.isNotEmpty,
+        )
         .toList(growable: false);
   }
 
