@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,6 +27,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
@@ -33,11 +36,11 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +50,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -65,13 +69,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import com.vynora.library.AudioTrack
-import com.vynora.library.MediaStoreMusicRepository
+import com.vynora.library.LibraryViewModel
 import com.vynora.playback.PlaybackController
 import com.vynora.playback.PlaybackSnapshot
 
+@UnstableApi
 class MainActivity : ComponentActivity() {
     private lateinit var playbackController: PlaybackController
+    private val libraryViewModel: LibraryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,7 +87,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             VynoraApp(
                 playbackController = playbackController,
-                repository = MediaStoreMusicRepository(applicationContext)
+                libraryViewModel = libraryViewModel
             )
         }
     }
@@ -94,11 +102,13 @@ class MainActivity : ComponentActivity() {
 @androidx.compose.runtime.Composable
 private fun VynoraApp(
     playbackController: PlaybackController,
-    repository: MediaStoreMusicRepository
+    libraryViewModel: LibraryViewModel
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var tracks by remember { mutableStateOf<List<AudioTrack>>(emptyList()) }
-    var isScanning by remember { mutableStateOf(false) }
+    val tracks by libraryViewModel.tracks.collectAsStateWithLifecycle()
+    val favorites by libraryViewModel.favorites.collectAsStateWithLifecycle()
+    val isScanning by libraryViewModel.isScanning.collectAsStateWithLifecycle()
+    val scanError by libraryViewModel.scanError.collectAsStateWithLifecycle()
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -117,19 +127,11 @@ private fun VynoraApp(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasPermission = granted
-        if (granted) {
-            isScanning = true
-            tracks = repository.scanAudio()
-            isScanning = false
-        }
+        if (granted) libraryViewModel.refreshLibrary()
     }
 
     LaunchedEffect(hasPermission) {
-        if (hasPermission) {
-            isScanning = true
-            tracks = repository.scanAudio()
-            isScanning = false
-        }
+        if (hasPermission) libraryViewModel.refreshLibrary()
     }
 
     MaterialTheme(colorScheme = darkColorScheme(
@@ -152,11 +154,8 @@ private fun VynoraApp(
                     },
                     actions = {
                         IconButton(onClick = {
-                            if (hasPermission) {
-                                isScanning = true
-                                tracks = repository.scanAudio()
-                                isScanning = false
-                            } else permissionLauncher.launch(permission)
+                            if (hasPermission) libraryViewModel.refreshLibrary()
+                            else permissionLauncher.launch(permission)
                         }) { Icon(Icons.Rounded.Refresh, contentDescription = "Rescan music") }
                     }
                 )
@@ -164,21 +163,23 @@ private fun VynoraApp(
             bottomBar = {
                 Column {
                     if (snapshot.title != "Nothing playing" && snapshot.title != "Player unavailable") {
-                        MiniPlayer(snapshot, playbackController)
+                        MiniPlayer(snapshot, playbackController, onOpen = { selectedTab = 3 })
                     }
                     NavigationBar(containerColor = Color(0xFF171421)) {
-                        NavigationBarItem(
-                            selected = selectedTab == 0,
-                            onClick = { selectedTab = 0 },
-                            icon = { Icon(Icons.Rounded.LibraryMusic, contentDescription = null) },
-                            label = { Text("Library") }
+                        val tabs = listOf(
+                            "Library" to Icons.Rounded.LibraryMusic,
+                            "Favorites" to Icons.Rounded.Favorite,
+                            "Playlists" to Icons.Rounded.QueueMusic,
+                            "Player" to Icons.Rounded.GraphicEq
                         )
-                        NavigationBarItem(
-                            selected = selectedTab == 1,
-                            onClick = { selectedTab = 1 },
-                            icon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) },
-                            label = { Text("Now playing") }
-                        )
+                        tabs.forEachIndexed { index, pair ->
+                            NavigationBarItem(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                icon = { Icon(pair.second, contentDescription = null) },
+                                label = { Text(pair.first) }
+                            )
+                        }
                     }
                 }
             }
@@ -191,13 +192,23 @@ private fun VynoraApp(
                     onQueryChange = { query = it },
                     isScanning = isScanning,
                     hasPermission = hasPermission,
+                    scanError = scanError,
                     onGrantPermission = { permissionLauncher.launch(permission) },
                     onPlay = { index -> playbackController.playQueue(tracks, index) },
-                    onRescan = {
-                        isScanning = true
-                        tracks = repository.scanAudio()
-                        isScanning = false
-                    }
+                    onRescan = libraryViewModel::refreshLibrary,
+                    onFavorite = libraryViewModel::setFavorite
+                )
+                1 -> TrackCollectionScreen(
+                    modifier = Modifier.padding(padding),
+                    title = "Your favorites",
+                    subtitle = "${favorites.size} saved songs",
+                    tracks = favorites,
+                    onPlay = { index -> playbackController.playQueue(favorites, index) },
+                    onFavorite = { track -> libraryViewModel.setFavorite(track, false) }
+                )
+                2 -> PlaylistsScreen(
+                    modifier = Modifier.padding(padding),
+                    libraryViewModel = libraryViewModel
                 )
                 else -> NowPlayingScreen(
                     modifier = Modifier.padding(padding),
@@ -217,9 +228,11 @@ private fun LibraryScreen(
     onQueryChange: (String) -> Unit,
     isScanning: Boolean,
     hasPermission: Boolean,
+    scanError: String?,
     onGrantPermission: () -> Unit,
     onPlay: (Int) -> Unit,
-    onRescan: () -> Unit
+    onRescan: () -> Unit,
+    onFavorite: (AudioTrack, Boolean) -> Unit
 ) {
     val filtered = remember(tracks, query) {
         tracks.withIndex().filter { (_, track) ->
@@ -240,44 +253,82 @@ private fun LibraryScreen(
             singleLine = true,
             shape = RoundedCornerShape(18.dp)
         )
+        scanError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+        }
         Spacer(Modifier.height(16.dp))
-        if (!hasPermission) {
-            EmptyLibrary(
+        when {
+            !hasPermission -> EmptyLibrary(
                 title = "Let Vynora find your music",
                 subtitle = "Audio access is used only to index music stored on this device.",
                 action = "Allow audio access",
                 onAction = onGrantPermission
             )
-        } else if (isScanning) {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+            isScanning -> Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (tracks.isEmpty()) {
-            EmptyLibrary(
+            tracks.isEmpty() -> EmptyLibrary(
                 title = "Your library is quiet",
                 subtitle = "Add audio files to your device, then rescan your music library.",
                 action = "Scan again",
                 onAction = onRescan
             )
-        } else {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("ALL SONGS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.weight(1f))
-                Text("Tap a song to play", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.height(8.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                items(filtered, key = { it.value.id }) { indexed ->
-                    TrackRow(track = indexed.value, onClick = { onPlay(indexed.index) })
+            filtered.isEmpty() -> EmptyLibrary(
+                title = "No matching songs",
+                subtitle = "Try another song, artist or album name.",
+                action = "Clear search",
+                onAction = { onQueryChange("") }
+            )
+            else -> {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("ALL SONGS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.weight(1f))
+                    Text("Tap a song to play", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                item { Spacer(Modifier.height(18.dp)) }
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(filtered, key = { it.value.uri }) { indexed ->
+                        TrackRow(
+                            track = indexed.value,
+                            onClick = { onPlay(indexed.index) },
+                            onFavorite = { onFavorite(indexed.value, !indexed.value.isFavorite) }
+                        )
+                    }
+                    item { Spacer(Modifier.height(18.dp)) }
+                }
             }
         }
     }
 }
 
 @androidx.compose.runtime.Composable
-private fun TrackRow(track: AudioTrack, onClick: () -> Unit) {
+private fun TrackCollectionScreen(
+    modifier: Modifier,
+    title: String,
+    subtitle: String,
+    tracks: List<AudioTrack>,
+    onPlay: (Int) -> Unit,
+    onFavorite: (AudioTrack) -> Unit
+) {
+    Column(modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+        Spacer(Modifier.height(18.dp))
+        Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(16.dp))
+        if (tracks.isEmpty()) {
+            EmptyLibrary("Nothing saved yet", "Tap the heart on a song to add it here.", "Browse library", {})
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(tracks, key = { it.uri }) { track ->
+                    TrackRow(track, onClick = { onPlay(tracks.indexOf(track)) }, onFavorite = { onFavorite(track) })
+                }
+            }
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun TrackRow(track: AudioTrack, onClick: () -> Unit, onFavorite: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -293,13 +344,20 @@ private fun TrackRow(track: AudioTrack, onClick: () -> Unit) {
             Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(track.durationLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        IconButton(onClick = onFavorite) {
+            Icon(
+                if (track.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                contentDescription = if (track.isFavorite) "Remove from favorites" else "Add to favorites",
+                tint = if (track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
 @androidx.compose.runtime.Composable
 private fun EmptyLibrary(title: String, subtitle: String, action: String, onAction: () -> Unit) {
     Column(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxWidth().weight(1f),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -317,10 +375,10 @@ private fun EmptyLibrary(title: String, subtitle: String, action: String, onActi
 }
 
 @androidx.compose.runtime.Composable
-private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackController) {
+private fun MiniPlayer(snapshot: PlaybackSnapshot, controller: PlaybackController, onOpen: () -> Unit) {
     Surface(color = Color(0xFF211B32), tonalElevation = 4.dp) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Rounded.Album, contentDescription = null, tint = Color(0xFFC8B8FF), modifier = Modifier.size(34.dp))
@@ -354,13 +412,24 @@ private fun NowPlayingScreen(
         ) {
             Icon(Icons.Rounded.GraphicEq, contentDescription = null, modifier = Modifier.size(104.dp), tint = Color(0xFFD4C7FF))
         }
-        Spacer(Modifier.height(30.dp))
+        Spacer(Modifier.height(24.dp))
         Text(snapshot.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(snapshot.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(30.dp))
+        Spacer(Modifier.height(18.dp))
+        Slider(
+            value = snapshot.positionMs.toFloat().coerceIn(0f, snapshot.durationMs.coerceAtLeast(1L).toFloat()),
+            onValueChange = controller::seekTo,
+            valueRange = 0f..snapshot.durationMs.coerceAtLeast(1L).toFloat(),
+            enabled = snapshot.durationMs > 0L
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(formatTime(snapshot.positionMs), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(formatTime(snapshot.durationMs), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = controller::toggleShuffle) { Icon(Icons.Rounded.Shuffle, contentDescription = "Toggle shuffle", tint = if (snapshot.shuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
             IconButton(onClick = controller::skipPrevious) { Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous track") }
-            Spacer(Modifier.size(20.dp))
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary) {
                 IconButton(onClick = controller::togglePlayback, modifier = Modifier.size(68.dp)) {
                     Icon(
@@ -371,10 +440,69 @@ private fun NowPlayingScreen(
                     )
                 }
             }
-            Spacer(Modifier.size(20.dp))
             IconButton(onClick = controller::skipNext) { Icon(Icons.Rounded.SkipNext, contentDescription = "Next track") }
+            IconButton(onClick = controller::cycleRepeatMode) { Icon(Icons.Rounded.Repeat, contentDescription = "Cycle repeat mode", tint = if (snapshot.repeatMode != 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Spacer(Modifier.height(18.dp))
         Text("Background playback powered by Android Media3", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun formatTime(milliseconds: Long): String {
+    val seconds = milliseconds.coerceAtLeast(0L) / 1_000L
+    return "%d:%02d".format(seconds / 60L, seconds % 60L)
+}
+
+@androidx.compose.runtime.Composable
+private fun PlaylistsScreen(modifier: Modifier, libraryViewModel: LibraryViewModel) {
+    val playlists by libraryViewModel.playlists.collectAsStateWithLifecycle()
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    Column(modifier.fillMaxSize().padding(20.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Playlists", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text("${playlists.size} collections", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Button(onClick = { showCreateDialog = true }) { Text("New playlist") }
+        }
+        Spacer(Modifier.height(16.dp))
+        if (playlists.isEmpty()) {
+            EmptyLibrary("Create your first playlist", "Collect songs for every mood and moment.", "Create playlist", { showCreateDialog = true })
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(playlists, key = { it.id }) { playlist ->
+                    Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.QueueMusic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(playlist.name, modifier = Modifier.weight(1f).padding(start = 12.dp), fontWeight = FontWeight.SemiBold)
+                            Text("Playlist", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (showCreateDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showCreateDialog = false; name = "" },
+            title = { Text("New playlist") },
+            text = {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Playlist name") }, singleLine = true)
+            },
+            confirmButton = {
+                Button(
+                    enabled = name.isNotBlank(),
+                    onClick = {
+                        libraryViewModel.createPlaylist(name)
+                        showCreateDialog = false
+                        name = ""
+                    }
+                ) { Text("Create") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showCreateDialog = false; name = "" }) { Text("Cancel") }
+            }
+        )
     }
 }
