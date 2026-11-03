@@ -1,37 +1,43 @@
 # Release readiness checklist
 
-This checklist reflects actual implementation; a successful CI run alone is not proof of Play Store readiness.
+A successful CI run verifies the configured build gates only. It does not establish physical-device or Play Store readiness.
 
-## Implemented in repository
+## Implemented and verified in CI
 
-- [x] Vynora launcher icon source committed
-- [x] Android launcher icon generation configured
-- [x] User-initiated local audio import into app-private storage
-- [x] Local audio playback queue and mini-player
-- [x] Background audio service and media notification integration configured
-- [x] Automated formatting, static analysis and test checks
-- [x] Android platform bootstrap and release-mode QA build in GitHub Actions
-- [x] QA APK uploaded as a workflow artifact
+- [x] Native Kotlin + Jetpack Compose Android app is the active root project.
+- [x] MediaStore audio indexing with granular audio permission.
+- [x] Room persistence for tracks, favorites and playlists.
+- [x] Compose Library, Favorites, Playlists and Now Playing surfaces.
+- [x] Media3 ExoPlayer + MediaSessionService background playback.
+- [x] Queue start, play/pause, next/previous, seek, shuffle and repeat.
+- [x] Native launcher icon and Android application identity.
+- [x] GitHub Actions Android SDK verification and Gradle debug APK build.
+- [x] Android lint and configured unit tests pass on the migration commit.
+- [x] Debug APK and lint report uploaded as workflow artifacts.
+- [x] Dependabot Gradle and GitHub Actions dependency updates enabled.
+- [x] Native CI is the sole production Android workflow on main.
+
+## Remaining product work
+
+- [ ] Album, artist and folder browsing with artwork cache.
+- [ ] Editable queue, play-next, reorder, queue persistence and playback history.
+- [ ] Sleep timer and robust audio focus/interruption handling.
+- [ ] Lyrics and equalizer after API and licensing review.
+- [ ] Widgets and Android Auto.
+- [ ] Room DAO, Compose UI and service lifecycle tests.
+- [ ] Accessibility, large font, keyboard/switch access and touch-target audit.
 
 ## Required before production release
 
-- [ ] Confirm CI is green on the committed Android platform
-- [ ] Verify import, playback, deletion and file persistence on physical devices
-- [ ] Verify background playback, audio focus, interruptions, notification and headset controls
-- [ ] Add metadata extraction, artwork, search, playlists, favorites and queue editing
-- [ ] Add widget and integration tests for the local player and navigation
-- [ ] Pin all dependency versions in the committed lockfile and audit updates
-- [ ] Test supported Android API levels and common device vendors
-- [ ] Configure a dedicated protected Android upload keystore in GitHub Secrets
-- [ ] Configure release signing and verify the signed APK/AAB certificate
-- [ ] Configure API key restrictions, quota alerts and key rotation
-- [ ] Review YouTube attribution, API terms, branding and permitted usage
-- [ ] Publish a privacy policy and complete Play Console Data safety disclosures
-- [ ] Complete app screenshots, store listing, content rating and support details
-- [ ] Verify offline, empty, timeout, quota-exceeded and permission-denied states
-- [ ] Verify accessibility, crash reporting and performance on physical devices
-- [ ] Create and verify a signed AAB before tagging a production version
+- [ ] Validate on physical devices across supported Android API levels and OEMs.
+- [ ] Verify permission grant/revocation, background playback, notification, headset/Bluetooth, audio focus and process recreation.
+- [ ] Verify large libraries, missing/corrupt files, empty states and storage edge cases.
+- [ ] Add and publish a privacy policy; complete Play Console Data safety and content rating.
+- [ ] Prepare store screenshots, listing, support contact and release notes.
+- [ ] Configure a dedicated protected upload keystore in GitHub Secrets.
+- [ ] Build a signed Android App Bundle and verify the signing certificate.
+- [ ] Complete Play Console internal testing before production rollout.
 
-## Signing requirements
+## Signing security
 
-The Actions QA APK is not a Play Store release. A production signing workflow must use repository secrets for a dedicated keystore, key alias, store password and key password. Never commit keystore files or passwords to this repository.
+The Actions debug APK is not a Play Store release. The release pipeline must use protected repository secrets for the keystore, alias and passwords. Never commit keystore files or passwords.

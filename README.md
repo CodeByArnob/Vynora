@@ -2,34 +2,42 @@
 
 **Your music, beautifully organized.**
 
-Vynora is a native Android offline-first music player built with Kotlin, Jetpack Compose, Material 3 and AndroidX Media3. It indexes device audio through Android MediaStore and plays local files through a MediaSession-backed background player.
+Vynora is an offline-first native Android music player built with Kotlin, Jetpack Compose, Material 3 and AndroidX Media3.
 
-## Native Android project
+## Current capabilities
 
-- Kotlin + Jetpack Compose + Material 3
-- AndroidX Media3 ExoPlayer + MediaSessionService
-- Room persistence for library metadata, favorites and playlists
-- MediaStore audio indexing with granular runtime permission
-- Queue playback, next/previous, seeking, shuffle and repeat
-- Compose library, favorites, playlists and now-playing screens
-- GitHub Actions build, lint, test and debug APK artifact
-- Dependabot Gradle and GitHub Actions updates
+- MediaStore indexing of device audio with granular runtime permission.
+- Room-backed library metadata, favorites and playlists.
+- Library, Favorites, Playlists and Now Playing Compose screens.
+- Media3 ExoPlayer with background MediaSessionService.
+- Queue playback, play/pause, next/previous, seeking, shuffle and repeat.
+- Native launcher icon.
+- GitHub Actions debug build, Android lint, unit tests and APK artifact.
+- Dependabot updates for Gradle and GitHub Actions.
 
-## Build
+## Build and verify
 
-Requirements: JDK 17, Android SDK Platform 36, Gradle 8.13, Android Gradle Plugin 8.13.2.
+Requirements: JDK 17, Android SDK Platform 36, Gradle 8.13 and Android Gradle Plugin 8.13.2.
 
-Run `gradle :app:assembleDebug`, `gradle :app:lintDebug` and `gradle :app:testDebugUnitTest`.
+```bash
+gradle :app:assembleDebug
+gradle :app:lintDebug
+gradle :app:testDebugUnitTest
+```
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Migration status
+## Migration
 
-The native Kotlin app is the active Android implementation. The former Flutter source is retained under `lib/`, `test/` and `pubspec.yaml` as a migration reference and is not part of the native build.
+The root-level Kotlin/Compose project is the active Android app. Previous Flutter source under `lib/`, `test/` and `pubspec.yaml` is retained as a migration reference and is not part of the Android build.
 
-Not yet release-complete: physical-device validation, full album/artist/folder browsing, artwork extraction/cache, advanced queue editing, lyrics, equalizer, sleep timer, Android Auto, signing and Play Console release preparation.
+## Not yet production-complete
 
-PixelPlayer is used only as a feature and UX reference. No proprietary source, trademarks or artwork are copied.
+Album/artist/folder browsing, artwork cache, editable queue, sleep timer, lyrics, equalizer, widgets, Android Auto, full UI/device test coverage, physical-device validation, signed AAB and Play Console preparation remain outstanding. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+
+A green CI run confirms only the configured automated gates; it is not a claim of device or store readiness.
+
+PixelPlayer is used only as a UX/feature reference. No proprietary source, trademarks or artwork are copied.
 
 ## License
 

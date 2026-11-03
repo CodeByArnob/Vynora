@@ -1,44 +1,45 @@
-# Architecture
+# Vynora Architecture
 
-## Current implementation
+## Active Android application
+
+The production Android app is a native Kotlin project at the repository root.
 
 ```
-lib/
-  main.dart
-  app/vynora_shell.dart
-  features/
-    discover/
-      data/youtube_trending_service.dart
-      domain/trending_video.dart
-      presentation/discover_screen.dart
+app/src/main/
+  java/com/vynora/
+    MainActivity.kt
     library/
-      data/local_music_repository.dart
-      data/local_music_providers.dart
-      domain/local_track.dart
-      presentation/library_screen.dart
-    player/
-      data/audio_player_provider.dart
+      AudioTrack.kt
+      LibraryViewModel.kt
+      MediaStoreMusicRepository.kt
+      PlaylistEntity.kt
+      TrackDao.kt
+      VynoraDatabase.kt
+    playback/
+      PlaybackController.kt
+      VynoraPlaybackService.kt
+  res/
 ```
 
-- Riverpod owns asynchronous discovery and local-library state.
-- YouTube metadata access and JSON parsing are separated from UI widgets.
-- User-selected audio files are copied to app-private storage; Vynora does not request broad shared-storage access for this import flow.
-- just_audio owns the local playback queue. just_audio_background exposes media notification, lock-screen and headset controls through the Android audio service.
-- The app shell shares one player instance across Discover and Library and exposes a mini-player.
+## Layers and responsibilities
 
-## Boundaries
+- **Presentation:** Jetpack Compose + Material 3. Screens collect lifecycle-aware state from the library ViewModel and playback controller.
+- **Library source:** `MediaStoreMusicRepository` queries device audio using Android MediaStore on `Dispatchers.IO`. Access is limited by Android's granular audio permission; no broad all-files permission is requested.
+- **Persistence:** Room stores indexed tracks, favorite flags, playlists and playlist membership. Library synchronization preserves favorites and removes stale MediaStore entries transactionally.
+- **Playback:** AndroidX Media3 ExoPlayer runs in `MediaSessionService`; the UI connects through `MediaController`. The service owns the player and the activity owns/releases its controller.
+- **Automation:** GitHub Actions runs SDK verification, Gradle debug build, Android lint, unit tests and uploads a debug APK. Dependabot checks Gradle and GitHub Actions dependencies.
 
-YouTube discovery metadata and local audio playback are intentionally separate. The YouTube screen opens the official YouTube app/site and never extracts audio. The local player only plays files selected by the user.
+## Product boundaries
 
-## Remaining production work
+Vynora plays local audio that Android exposes through MediaStore. YouTube discovery metadata, if enabled in a future build, must remain separate from playback. The app must not extract or download YouTube audio.
 
-- Device-wide MediaStore library indexing with granular permission UX (optional; current design uses system file picker import).
-- Persistent playlists, favorites, playback history and user-editable metadata.
-- Track metadata parsing and album-art thumbnails.
-- Search, sorting and queue editing.
-- Robust handling for missing, moved, unsupported and corrupted audio files.
-- Verify Android foreground service, audio focus, interruptions, Bluetooth/headset controls and notification permission behavior on physical devices.
-- Add integration/widget coverage for import, playback, deletion, navigation and lifecycle.
-- API cache, quota monitoring, region selector, YouTube attribution and offline/error state audits.
-- Crash reporting, accessibility and release performance testing.
-- Protected upload-key signing, AAB build and Play Console release configuration.
+PixelPlayer is a feature and UX reference only. Do not copy proprietary code, artwork or branding.
+
+## Known gaps
+
+- Album, artist and folder browse destinations and album-art cache.
+- Editable/persisted queue, play-next, queue reordering and playback history.
+- Sleep timer, lyrics, equalizer (only where supported by Android audio-effect APIs), widgets and Android Auto.
+- More Room DAO and Compose UI tests.
+- Physical-device validation for media permissions, audio focus, interruptions, notification controls, Bluetooth/headset routes and process recreation.
+- Accessibility and large-font audit, privacy policy, signed AAB and Play Console release.
