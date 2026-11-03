@@ -2,17 +2,19 @@
 
 **Your music, beautifully organized.**
 
-Vynora is an open-source Flutter Material 3 music discovery and local music player. The initial app foundation includes a region-aware YouTube Music chart screen, loading/error/empty states, and a separate domain model and API service.
+Vynora is an open-source Flutter Material 3 music discovery and local music player project. The current app foundation provides a Bangladesh-focused YouTube trending-music metadata screen with thumbnail loading and explicit loading/error/empty states.
 
-> **Playback boundary:** YouTube Data API provides video metadata, not downloadable audio. Vynora does not extract, download, proxy, or background-play YouTube audio. Selected YouTube videos open through the official YouTube app/site. Local audio playback is a separate feature for files the user owns or is authorized to play.
+> **Playback boundary:** YouTube Data API provides video metadata, not downloadable audio. Vynora does not extract, download, proxy, or background-play YouTube audio. Selected YouTube videos open through the official YouTube app/site. A separate on-device audio player is still under development and is not yet part of the shipped feature set.
 
-## Current status
+## Current release status
 
-The Flutter foundation and first YouTube trending discovery implementation are committed. This is **not yet a finished production release**. Local media scanning, persistent playlists, local background playback, region selection, full test coverage, platform configuration and real-device release validation remain outstanding.
+This repository is **not production-ready yet**. The launcher icon source is included. GitHub Actions bootstraps the missing Android platform during a verified main-branch build, generates Android launcher resources, runs formatting, static analysis and tests, builds a release-mode QA APK, and then persists the generated Android project and lockfile to `main`.
 
-## Run
+The QA APK uploaded by Actions is **not Play Store signed**. A protected upload keystore, signing configuration, store metadata, privacy disclosures, device testing and the remaining music-player features are still required before a public production release.
 
-Requirements: Flutter stable and Dart compatible with Flutter 3.7+.
+## Run locally
+
+Requirements: Flutter 3.47.9 (or the version pinned in CI) and the matching Dart SDK.
 
 ```bash
 flutter pub get
@@ -30,12 +32,14 @@ The app calls YouTube Data API v3 `videos.list` with `chart=mostPopular`, `regio
 - Flutter + Material 3, system light/dark themes
 - Riverpod async state management
 - YouTube metadata adapter isolated from presentation
-- GitHub Actions workflow for formatting, analysis and tests
+- Vynora launcher icon source and Android icon generation
+- GitHub Actions: format, analyze, tests, Android QA build and platform bootstrap
+- Dependabot: weekly pub and GitHub Actions dependency update PRs
 - MIT License
 
 See [architecture](docs/ARCHITECTURE.md), [YouTube integration rules](docs/YOUTUBE_INTEGRATION.md), [release checklist](docs/RELEASE_CHECKLIST.md), and [contributing](CONTRIBUTING.md).
 
-## Quality gates
+## Local quality gates
 
 ```bash
 dart format --set-exit-if-changed .
