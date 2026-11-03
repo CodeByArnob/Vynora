@@ -30,10 +30,6 @@ class DiscoverScreen extends ConsumerWidget {
           'vynora',
           style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -1.1),
         ),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search_rounded)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.tune_rounded)),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(trendingMusicProvider.future),
@@ -120,24 +116,7 @@ class DiscoverScreen extends ConsumerWidget {
                             ],
                           ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Your library',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const Card(
-              child: ListTile(
-                leading: CircleAvatar(child: Icon(Icons.library_music_rounded)),
-                title: Text('On-device music'),
-                subtitle: Text(
-                  'Your songs, albums and playlists will appear here.',
-                ),
-                trailing: Icon(Icons.chevron_right_rounded),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               'YouTube provides chart metadata and thumbnails. Playback opens '
               'in YouTube; Vynora does not extract YouTube audio.',
@@ -147,25 +126,6 @@ class DiscoverScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
-            label: 'Discover',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.library_music_outlined),
-            label: 'Library',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.favorite_border_rounded),
-            label: 'Liked',
-          ),
-        ],
-        onDestinationSelected: (_) {},
       ),
     );
   }
